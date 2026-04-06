@@ -1,0 +1,58 @@
+---
+sidebar_position: 3
+slug: /chapters/front-door/quiz
+title: "Quiz: Locking the Front Door"
+---
+
+import { Quiz, QuizQuestion } from '@site/src/components/Quiz';
+
+# Quiz: Locking the Front Door
+
+Test your understanding of authentication security, credential handling, and session management.
+
+<Quiz chapterId="front-door">
+  <QuizQuestion
+    question="Why is dart:developer.log() safer than print() for logging in Flutter apps?"
+    options={[
+      "It encrypts log messages before writing them",
+      "It is automatically stripped from release builds by the Dart compiler",
+      "It writes to a secure system log that requires root access to read",
+      "It rate-limits log output to prevent log flooding",
+    ]}
+    correctIndex={1}
+    explanation="dart:developer.log() calls are removed during AOT compilation for release builds, so they never appear on the device. print() statements persist in release builds and write to stdout, which on Android is captured by logcat and readable via ADB."
+  />
+  <QuizQuestion
+    question="What is the primary purpose of token rotation during a session refresh?"
+    options={[
+      "To reduce the size of the JWT payload over time",
+      "To ensure the server can detect stolen refresh tokens by marking old ones as invalid",
+      "To force users to re-enter their password periodically",
+      "To compress network traffic between client and server",
+    ]}
+    correctIndex={1}
+    explanation="With token rotation, the server issues a new refresh token on every refresh request and invalidates the old one. If an attacker steals a refresh token and the legitimate user refreshes first, the stolen token becomes invalid. The server can also detect reuse of an old token and revoke all tokens for that user as a precaution."
+  />
+  <QuizQuestion
+    question="A login screen implements client-side rate limiting that locks out after 5 failed attempts. Is this sufficient to prevent brute-force attacks?"
+    options={[
+      "Yes — 5 attempts is too few for a brute-force attack to succeed",
+      "Yes — the lockout timer makes automated attacks impractical",
+      "No — an attacker can bypass the client entirely and call the API directly",
+      "No — but only because the lockout duration is too short",
+    ]}
+    correctIndex={2}
+    explanation="Client-side rate limiting improves user experience and reduces unnecessary traffic, but it cannot prevent brute-force attacks. An attacker can bypass the app entirely and send HTTP requests directly to the API endpoint. Server-side rate limiting (returning HTTP 429) is essential. Client-side throttling is a complementary measure, not a substitute."
+  />
+  <QuizQuestion
+    question="Which of the following is the MOST secure way to log a failed authentication attempt?"
+    options={[
+      "print('Failed login for $email with password $password');",
+      "developer.log('Failed login for: $email', name: 'Auth');",
+      "developer.log('Failed login for: ${email.split('@').first}@***', name: 'Auth');",
+      "developer.log('Failed login attempt', name: 'Auth');",
+    ]}
+    correctIndex={2}
+    explanation="Option C partially redacts the email (showing only the local part) while omitting the password entirely. This gives enough information to debug issues (you can identify which user account is affected) without exposing the full email address. Option D is overly cautious — it provides no useful debugging information. Options A and B both expose the full email, and option A fatally logs the password in plaintext."
+  />
+</Quiz>

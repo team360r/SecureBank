@@ -1,0 +1,259 @@
+---
+sidebar_position: 2
+title: "Part 2: Double-Locked Doors"
+slug: /chapters/access-control/part-2
+---
+
+import Tabs from '@theme/Tabs';
+import TabItem from '@theme/TabItem';
+
+# Part 2: Double-Locked Doors
+
+> *"Trust the gatekeeper, but verify the credentials at every threshold."*
+
+---
+
+## Validating Deep Link Parameters
+
+Route guards prevent navigation to wrong screens, but deep links can also carry **parameters** -- and those parameters can be weaponised. Consider this route:
+
+```dart title="lib/routing/app_router.dart (excerpt)"
+GoRoute(
+  path: '/transfer/:accountId',
+  builder: (context, state) {
+    final accountId = state.pathParameters['accountId']!;
+    return TransferScreen(accountId: accountId);
+  },
+),
+```
+
+An attacker crafts:
+
+```
+fortknox://app/transfer/../../admin/users
+```
+
+Or passes an account ID belonging to another user:
+
+```
+fortknox://app/transfer/ACC-9999-ADMIN
+```
+
+### The Validation Layer
+
+Add parameter validation directly in the route builder, before the screen ever renders:
+
+```dart title="lib/routing/param_validators.dart"
+class ParamValidators {
+  static final _accountIdPattern = RegExp(r'^ACC-\d{4}-[A-Z]{2}$');
+
+  /// Validates an account ID matches the expected format
+  /// and belongs to the authenticated user.
+  static bool isValidAccountId(String? accountId, User currentUser) {
+    if (accountId == null) return false;
+    if (!_accountIdPattern.hasMatch(accountId)) return false;
+    return currentUser.accountIds.contains(accountId);
+  }
+
+  /// Validates a transaction ID is a positive integer.
+  static bool isValidTransactionId(String? txId) {
+    if (txId == null) return false;
+    final parsed = int.tryParse(txId);
+    return parsed != null && parsed > 0;
+  }
+}
+```
+
+Wire validation into the route:
+
+```dart title="lib/routing/app_router.dart (hardened transfer route)"
+GoRoute(
+  path: '/transfer/:accountId',
+  redirect: (context, state) {
+    final user = context.read<AuthController>().currentUser;
+    final accountId = state.pathParameters['accountId'];
+
+    if (user == null) return '/login';
+    if (!ParamValidators.isValidAccountId(accountId, user)) {
+      return '/'; // Invalid or unauthorised account — bounce
+    }
+    return null;
+  },
+  builder: (context, state) {
+    final accountId = state.pathParameters['accountId']!;
+    return TransferScreen(accountId: accountId);
+  },
+),
+```
+
+:::tip Defence in Depth
+Parameter validation at the router level is your **first** line of defence. The screen itself should also validate -- never assume the data arriving in the constructor is safe. But catching bad input early prevents unnecessary widget builds and potential side effects.
+:::
+
+---
+
+## API-Side Authorization Headers
+
+Client-side guards are necessary but **insufficient**. A determined attacker can bypass the Flutter app entirely and call your API directly. Every API request must carry an authorization token that the server validates independently.
+
+```dart title="lib/data/network/auth_interceptor.dart"
+import 'package:dio/dio.dart';
+
+class AuthInterceptor extends Interceptor {
+  final AuthController _authController;
+
+  AuthInterceptor(this._authController);
+
+  @override
+  void onRequest(
+    RequestOptions options,
+    RequestInterceptorHandler handler,
+  ) {
+    final token = _authController.accessToken;
+    if (token != null) {
+      options.headers['Authorization'] = 'Bearer $token';
+      options.headers['X-User-Role'] = _authController.currentUser?.role.name;
+    }
+    handler.next(options);
+  }
+
+  @override
+  void onError(DioException err, ErrorInterceptorHandler handler) {
+    if (err.response?.statusCode == 401) {
+      _authController.forceLogout();
+    }
+    if (err.response?.statusCode == 403) {
+      // Role insufficient — the server rejected the request
+      _authController.handleForbidden(err.requestOptions.path);
+    }
+    handler.next(err);
+  }
+}
+```
+
+Register the interceptor when creating the Dio client:
+
+```dart title="lib/data/network/api_client.dart"
+Dio createApiClient(AuthController authController) {
+  final dio = Dio(BaseOptions(
+    baseUrl: 'https://api.fortknox.example.com/v1',
+    connectTimeout: const Duration(seconds: 10),
+  ));
+
+  dio.interceptors.add(AuthInterceptor(authController));
+  return dio;
+}
+```
+
+:::caution Do Not Trust X-User-Role on the Server
+The `X-User-Role` header is sent for **logging and debugging** only. The server must decode the JWT `Bearer` token, extract the role from the token claims, and validate against its own database. A client-supplied role header is trivially forgeable.
+:::
+
+### Handling 403 Responses
+
+When the server returns 403 Forbidden, the app should respond gracefully:
+
+```dart title="lib/features/auth/auth_controller.dart (excerpt)"
+void handleForbidden(String path) {
+  // Log the attempt for security monitoring
+  _analytics.logSecurityEvent(
+    event: 'access_denied',
+    details: {'path': path, 'role': currentUser?.role.name},
+  );
+
+  // Show user-friendly message
+  _snackBarService.show(
+    'You do not have permission to access this resource.',
+    type: SnackBarType.warning,
+  );
+}
+```
+
+---
+
+## Before and After
+<Tabs>
+<TabItem value="before" label="Before (Vulnerable)">
+
+```dart title="app_router.dart — NO GUARDS"
+final appRouter = GoRouter(
+  routes: [
+    GoRoute(
+      path: '/admin/users',
+      builder: (context, state) => const AdminUsersScreen(),
+    ),
+    GoRoute(
+      path: '/transfer/:accountId',
+      builder: (context, state) {
+        // No validation — any string accepted
+        final accountId = state.pathParameters['accountId']!;
+        return TransferScreen(accountId: accountId);
+      },
+    ),
+  ],
+);
+```
+
+**Result:** Any user reaches admin screens. Deep links with manipulated parameters are accepted. No server-side authorization.
+</TabItem>
+<TabItem value="after" label="After (Hardened)">
+
+```dart title="app_router.dart — ROLE-GUARDED"
+final appRouter = GoRouter(
+  redirect: (context, state) {
+    final auth = context.read<AuthController>();
+    final path = state.matchedLocation;
+    final metadata = routePermissions[path] ?? const RouteMetadata();
+
+    if (metadata.requiresAuth && !auth.isAuthenticated) {
+      return '/login?redirect=${Uri.encodeComponent(path)}';
+    }
+    if (metadata.requiredRole != null &&
+        !auth.currentUser!.role.hasAccess(metadata.requiredRole!)) {
+      return '/';
+    }
+    return null;
+  },
+  routes: [
+    GoRoute(
+      path: '/admin/users',
+      builder: (context, state) => const AdminUsersScreen(),
+    ),
+    GoRoute(
+      path: '/transfer/:accountId',
+      redirect: (context, state) {
+        final user = context.read<AuthController>().currentUser;
+        final accountId = state.pathParameters['accountId'];
+        if (!ParamValidators.isValidAccountId(accountId, user!)) {
+          return '/';
+        }
+        return null;
+      },
+      builder: (context, state) {
+        final accountId = state.pathParameters['accountId']!;
+        return TransferScreen(accountId: accountId);
+      },
+    ),
+  ],
+);
+```
+
+**Result:** Unauthenticated users redirect to login. Unauthorised roles bounce to dashboard. Parameters are validated. API calls carry Bearer tokens for server-side enforcement.
+</TabItem>
+</Tabs>
+
+---
+
+## Deep Dive
+
+- [OWASP M6: Insecure Authorization](https://owasp.org/www-project-mobile-top-10/) -- How broken access controls rank among the most exploited mobile vulnerabilities.
+- [GoRouter Redirect Documentation](https://pub.dev/documentation/go_router/latest/) -- Official guide to redirect guards, sub-route redirects, and state management.
+- [Android Deep Link Security](https://developer.android.com/training/app-links/deep-linking) -- Android's documentation on intent filters, verified links, and securing deep link handling.
+- [iOS Universal Links](https://developer.apple.com/documentation/xcode/allowing-apps-and-websites-to-link-to-your-content) -- Apple's approach to verified deep links and associated domains.
+- [RBAC Design Patterns](https://en.wikipedia.org/wiki/Role-based_access_control) -- The formal model behind role hierarchies, permissions, and access matrices.
+
+---
+
+## What's Next
+
+Your routes are guarded and your API demands proper credentials. But what happens when a user types malicious input into a form field? In **Chapter 6: Hardened Inputs**, you will defend against SQL injection in Drift queries and XSS attacks in WebView components.

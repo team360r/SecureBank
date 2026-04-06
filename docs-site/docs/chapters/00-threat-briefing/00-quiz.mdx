@@ -1,0 +1,58 @@
+---
+sidebar_position: 3
+slug: /chapters/threat-briefing/quiz
+title: "Quiz: Threat Briefing"
+---
+
+import { Quiz, QuizQuestion } from '@site/src/components/Quiz';
+
+# Quiz: Threat Briefing
+
+Test your understanding of mobile security threats and the OWASP Mobile Top 10.
+
+<Quiz chapterId="threat-briefing">
+  <QuizQuestion
+    question="A Flutter app stores an API key as a static const String in a Dart file. Which OWASP Mobile Top 10 risk does this fall under?"
+    options={[
+      "M5: Insecure Communication",
+      "M1: Improper Credential Usage",
+      "M9: Insecure Data Storage",
+      "M4: Insufficient Input Validation",
+    ]}
+    correctIndex={1}
+    explanation="Hardcoding credentials directly in source code is classified under M1: Improper Credential Usage. The Dart AOT binary can be decompiled, exposing the key to any attacker with access to the APK or IPA."
+  />
+  <QuizQuestion
+    question="Why is using print() to log user credentials particularly dangerous on Android?"
+    options={[
+      "It slows down the app in release mode",
+      "Print statements are removed by the Dart compiler automatically",
+      "Logcat output is readable by other apps on pre-API-24 devices and by anyone with USB debugging",
+      "It only affects debug builds and is safe in production",
+    ]}
+    correctIndex={2}
+    explanation="On Android, print() writes to logcat. On devices running Android 6.0 and earlier, any app with READ_LOGS permission can read these entries. Even on newer devices, anyone with ADB access can read the full log output, meaning credentials end up in plaintext on the device."
+  />
+  <QuizQuestion
+    question="An app makes API calls over HTTP instead of HTTPS. Which attack does this directly enable?"
+    options={[
+      "SQL injection",
+      "Cross-site scripting (XSS)",
+      "Man-in-the-middle (MITM) interception",
+      "Buffer overflow",
+    ]}
+    correctIndex={2}
+    explanation="Unencrypted HTTP traffic can be intercepted and modified by anyone on the same network. A man-in-the-middle attacker can read authentication tokens, account balances, and transaction data in plaintext. This is classified under OWASP M5: Insecure Communication."
+  />
+  <QuizQuestion
+    question="SharedPreferences on Android stores data as:"
+    options={[
+      "AES-256 encrypted files in the app sandbox",
+      "Plaintext XML files in the app's data directory",
+      "Encrypted entries in the Android Keystore",
+      "Binary-encoded data that requires root to read",
+    ]}
+    correctIndex={1}
+    explanation="SharedPreferences writes plaintext XML files to the app's data directory. On a rooted device, these files are trivially readable. This is why sensitive data like authentication tokens and API keys must never be stored in SharedPreferences — use flutter_secure_storage (backed by Keychain on iOS and EncryptedSharedPreferences / Keystore on Android) instead."
+  />
+</Quiz>

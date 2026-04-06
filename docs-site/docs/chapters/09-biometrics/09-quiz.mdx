@@ -1,0 +1,63 @@
+---
+sidebar_position: 3
+slug: /chapters/biometrics/quiz
+title: "Chapter 9: Quiz"
+---
+
+import { Quiz, QuizQuestion } from '@site/src/components/Quiz';
+
+# Chapter 9: Biometric Checkpoint — Quiz
+
+Test your understanding of biometric authentication and app lifecycle security.
+
+<Quiz chapterId="biometrics">
+
+<QuizQuestion
+  question="Why should you set biometricOnly to false in the local_auth options?"
+  options={[
+    "It is required by Google Play Store guidelines for banking apps",
+    "It allows users to fall back to device PIN or passcode, improving accessibility and handling sensor failures",
+    "It makes the authentication prompt appear faster",
+    "It prevents the app from crashing on devices without biometric hardware"
+  ]}
+  correctIndex={1}
+  explanation="Setting biometricOnly to false allows the device PIN or passcode as a fallback. This is essential for accessibility (not all users can use biometrics) and for cases where the biometric sensor is dirty, damaged, or temporarily unavailable. The app still requires device-level authentication — just not exclusively biometric."
+/>
+
+<QuizQuestion
+  question="On iOS, why must you show the privacy overlay during the 'inactive' lifecycle state rather than 'paused'?"
+  options={[
+    "The paused state does not exist on iOS",
+    "iOS captures the task-switcher screenshot during the inactive phase, before paused fires",
+    "The inactive state lasts longer, giving you more time to render the overlay",
+    "Flutter does not support the paused state on iOS devices"
+  ]}
+  correctIndex={1}
+  explanation="iOS captures the task-switcher snapshot when the app transitions to the inactive state — this happens before paused. If you wait for paused to show the overlay, the screenshot has already been taken with sensitive financial data visible in the thumbnail."
+/>
+
+<QuizQuestion
+  question="What does Android's FLAG_SECURE prevent?"
+  options={[
+    "Third-party apps from accessing the device camera while your app is open",
+    "Users from taking screenshots, and the system from capturing task-switcher thumbnails and screen recordings",
+    "Root access to the device while the app is running",
+    "Other apps from reading the clipboard contents"
+  ]}
+  correctIndex={1}
+  explanation="FLAG_SECURE tells the Android window manager to treat the activity's content as secure. This prevents screenshots (they return a black image), blocks task-switcher thumbnails, and stops screen recording and casting from capturing the activity's content."
+/>
+
+<QuizQuestion
+  question="Why should a banking app automatically clear the clipboard after copying an account number?"
+  options={[
+    "To free up device memory used by the clipboard buffer",
+    "Because the system clipboard is accessible to any app on the device, and lingering sensitive data is a PII exposure risk",
+    "To comply with GDPR article 17 (right to erasure) requirements",
+    "Because clipboard data persists across device reboots and could survive a factory reset"
+  ]}
+  correctIndex={1}
+  explanation="On both Android and iOS, any app can read the system clipboard. If a user copies their sort code or account number and then opens another app, that app could silently read the clipboard contents. Auto-clearing after a short timeout (e.g. 30 seconds) limits the exposure window."
+/>
+
+</Quiz>

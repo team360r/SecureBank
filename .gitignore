@@ -1,0 +1,21 @@
+# Flutter
+.dart_tool/
+.packages
+build/
+*.g.dart
+
+# Docusaurus
+docs-site/node_modules/
+docs-site/.docusaurus/
+docs-site/build/
+
+# IDE
+.idea/
+.vscode/
+*.iml
+
+# macOS
+.DS_Store
+
+# Misc
+*.log

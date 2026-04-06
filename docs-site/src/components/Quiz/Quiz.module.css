@@ -1,0 +1,165 @@
+/* docs-site/src/components/Quiz/Quiz.module.css */
+.question {
+  margin-bottom: 2rem;
+}
+
+.questionText {
+  font-weight: 600;
+  margin-bottom: 0.75rem;
+  font-size: 1rem;
+}
+
+.options {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.card,
+.cardSelected,
+.cardCorrect,
+.cardWrong,
+.cardDimmed {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem 1rem;
+  border-radius: 8px;
+  border: 2px solid;
+  cursor: pointer;
+  text-align: left;
+  width: 100%;
+  background: none;
+  font-size: 0.95rem;
+  transition: border-color 0.15s, background-color 0.15s;
+}
+
+.card {
+  border-color: var(--ifm-color-emphasis-300);
+  background: var(--ifm-background-color);
+  color: var(--ifm-font-color-base);
+}
+
+.card:hover:not(:disabled) {
+  border-color: var(--ifm-color-primary);
+  background: var(--ifm-color-primary-lightest);
+}
+
+.cardSelected {
+  border-color: var(--ifm-color-primary);
+  background: var(--ifm-color-primary-lightest);
+  color: var(--ifm-color-primary-darkest);
+}
+
+.cardCorrect {
+  border-color: #2e7d32;
+  background: #e8f5e9;
+  color: #1b5e20;
+  cursor: default;
+}
+
+.cardWrong {
+  border-color: #c62828;
+  background: #ffebee;
+  color: #b71c1c;
+  cursor: default;
+}
+
+.cardDimmed {
+  border-color: var(--ifm-color-emphasis-200);
+  background: var(--ifm-color-emphasis-100);
+  color: var(--ifm-color-emphasis-500);
+  cursor: default;
+}
+
+.label {
+  font-weight: 700;
+  min-width: 1.5rem;
+  flex-shrink: 0;
+}
+
+.optionText {
+  flex: 1;
+}
+
+.yourAnswer {
+  font-size: 0.8rem;
+  opacity: 0.7;
+  flex-shrink: 0;
+}
+
+.correctMark {
+  font-size: 1rem;
+  flex-shrink: 0;
+}
+
+.explanation {
+  margin-top: 0.75rem;
+  padding: 0.75rem 1rem;
+  border-radius: 6px;
+  background: var(--ifm-color-emphasis-100);
+  border-left: 4px solid var(--ifm-color-primary);
+  font-size: 0.9rem;
+  line-height: 1.5;
+}
+
+/* Score card */
+.scoreCard {
+  margin-bottom: 1.5rem;
+  padding: 1rem 1.25rem;
+  border-radius: 10px;
+  border: 2px solid;
+  text-align: center;
+}
+
+.scoreCardGreen {
+  border-color: #2e7d32;
+  background: #e8f5e9;
+  color: #1b5e20;
+}
+
+.scoreCardAmber {
+  border-color: #f57f17;
+  background: #fff8e1;
+  color: #e65100;
+}
+
+.scoreCardRed {
+  border-color: #c62828;
+  background: #ffebee;
+  color: #b71c1c;
+}
+
+.scoreNumber {
+  font-size: 1.75rem;
+  font-weight: 700;
+}
+
+.scoreLabel {
+  font-size: 0.9rem;
+  margin-top: 0.25rem;
+}
+
+/* Check Answers button */
+.checkButton {
+  display: block;
+  margin: 1.5rem auto 0;
+  padding: 0.75rem 2rem;
+  font-size: 1rem;
+  font-weight: 600;
+  border-radius: 8px;
+  border: none;
+  cursor: pointer;
+  background: var(--ifm-color-primary);
+  color: white;
+  transition: opacity 0.15s;
+}
+
+.checkButton:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.checkButton:not(:disabled):hover {
+  opacity: 0.85;
+}

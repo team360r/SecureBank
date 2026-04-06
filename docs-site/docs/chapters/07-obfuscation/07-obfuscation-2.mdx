@@ -1,0 +1,326 @@
+---
+sidebar_position: 2
+title: "Part 2: Reinforced Walls"
+slug: /chapters/obfuscation/part-2
+---
+
+import Tabs from '@theme/Tabs';
+import TabItem from '@theme/TabItem';
+
+# Part 2: Reinforced Walls
+
+> *"Obfuscation slows the siege; tamper detection sounds the alarm."*
+
+---
+
+## Android ProGuard / R8 Rules
+
+Dart obfuscation handles the Dart layer, but your Flutter app also includes native Android code -- platform channels, plugins, and the Flutter engine itself. Android's **R8** compiler (the successor to ProGuard) can shrink and obfuscate this native layer.
+
+### Enabling R8
+
+R8 is enabled by default for release builds in modern Android Gradle configurations. Verify it in your build file:
+
+```groovy title="android/app/build.gradle"
+android {
+    buildTypes {
+        release {
+            minifyEnabled true        // Enable R8 shrinking + obfuscation
+            shrinkResources true      // Remove unused resources
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'),
+                          'proguard-rules.pro'
+        }
+    }
+}
+```
+
+### Custom ProGuard Rules for Flutter
+
+Flutter and its plugins sometimes require classes to be kept unobfuscated. Add rules to preserve them:
+
+```pro title="android/app/proguard-rules.pro"
+# Flutter engine — required for method channel communication
+-keep class io.flutter.** { *; }
+-keep class io.flutter.plugins.** { *; }
+
+# Keep annotations used by Gson/Retrofit if you use native HTTP plugins
+-keepattributes *Annotation*
+
+# Preserve flutter_secure_storage native bridge
+-keep class com.it_nomads.fluttersecurestorage.** { *; }
+
+# Preserve the app's signature verification class (see below)
+-keep class com.fortknox.app.security.SignatureVerifier { *; }
+
+# Remove logging in release builds
+-assumenosideeffects class android.util.Log {
+    public static *** d(...);
+    public static *** v(...);
+    public static *** i(...);
+}
+```
+
+:::tip Test ProGuard Rules Thoroughly
+Aggressive R8 rules can strip classes that plugins need at runtime, causing crashes that only appear in release builds. Always test the release APK on a real device before publishing. If a plugin crashes, add a `-keep` rule for its native classes.
+:::
+
+---
+
+## Root and Jailbreak Detection
+
+A rooted Android device or jailbroken iPhone gives the user (or attacker) full control over the filesystem, memory, and inter-process communication. For a banking app, this is a significant threat:
+
+- **Rooted devices** allow reading the app's private database, even encrypted values, by dumping process memory.
+- **Jailbroken devices** can inject code into your app's process using tools like Frida or Cycript.
+
+### Implementing Detection
+
+Use the `flutter_jailbreak_detection` package or build your own checks:
+
+```dart title="lib/security/device_integrity_service.dart"
+import 'dart:io';
+
+class DeviceIntegrityService {
+  /// Check for common root/jailbreak indicators.
+  /// Returns true if the device appears compromised.
+  Future<bool> isDeviceCompromised() async {
+    if (Platform.isAndroid) {
+      return _checkAndroidRoot();
+    } else if (Platform.isIOS) {
+      return _checkiOSJailbreak();
+    }
+    return false;
+  }
+
+  bool _checkAndroidRoot() {
+    // Check for common root management apps
+    final rootIndicators = [
+      '/system/app/Superuser.apk',
+      '/system/xbin/su',
+      '/system/bin/su',
+      '/sbin/su',
+      '/data/local/xbin/su',
+      '/data/local/bin/su',
+      '/system/sd/xbin/su',
+    ];
+
+    for (final path in rootIndicators) {
+      if (File(path).existsSync()) return true;
+    }
+
+    // Check for test-keys (custom ROM indicator)
+    try {
+      final buildTags = File('/system/build.prop').readAsStringSync();
+      if (buildTags.contains('test-keys')) return true;
+    } catch (_) {
+      // File not readable — not necessarily rooted
+    }
+
+    return false;
+  }
+
+  bool _checkiOSJailbreak() {
+    // Check for common jailbreak artefacts
+    final jailbreakPaths = [
+      '/Applications/Cydia.app',
+      '/Library/MobileSubstrate/MobileSubstrate.dylib',
+      '/bin/bash',
+      '/usr/sbin/sshd',
+      '/etc/apt',
+      '/private/var/lib/apt/',
+    ];
+
+    for (final path in jailbreakPaths) {
+      if (File(path).existsSync()) return true;
+    }
+
+    // Check if app can write outside its sandbox
+    try {
+      final testFile = File('/private/jailbreak_test');
+      testFile.writeAsStringSync('test');
+      testFile.deleteSync();
+      return true; // Sandbox escaped — device is jailbroken
+    } catch (_) {
+      return false; // Write failed — sandbox intact
+    }
+  }
+}
+```
+
+### Responding to Compromised Devices
+
+Do not silently ignore a compromised device. Provide a graduated response:
+
+```dart title="lib/main.dart (excerpt)"
+Future<void> _checkDeviceIntegrity() async {
+  final integrity = DeviceIntegrityService();
+  final isCompromised = await integrity.isDeviceCompromised();
+
+  if (isCompromised) {
+    // Option 1: Warn the user but allow continued use
+    await showDialog(
+      context: navigatorKey.currentContext!,
+      barrierDismissible: false,
+      builder: (context) => AlertDialog(
+        title: const Text('Security Warning'),
+        content: const Text(
+          'This device appears to be rooted or jailbroken. '
+          'FortKnox cannot guarantee the security of your financial '
+          'data on a compromised device. Some features may be restricted.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('I Understand'),
+          ),
+        ],
+      ),
+    );
+
+    // Option 2: Restrict sensitive operations
+    _featureFlags.disableHighValueTransfers();
+  }
+}
+```
+
+:::caution Detection Is Not Foolproof
+Sophisticated rooters can hide indicators from file-system checks. Tools like Magisk use "systemless root" that does not modify `/system`. For high-security apps, consider server-side attestation using Google's Play Integrity API or Apple's DeviceCheck -- these provide hardware-backed assurance that the device environment is genuine.
+:::
+
+---
+
+## Anti-Tampering: Signature Verification
+
+Even with obfuscation, an attacker can modify your APK (inject logging, remove security checks) and re-sign it with their own key. Signature verification detects this:
+
+```dart title="lib/security/signature_verifier.dart"
+import 'package:flutter/services.dart';
+
+class SignatureVerifier {
+  static const _channel = MethodChannel('com.fortknox.app/security');
+
+  /// The SHA-256 fingerprint of your release signing certificate.
+  /// Get this with: keytool -list -v -keystore release.keystore
+  static const _expectedFingerprint =
+      'A1:B2:C3:D4:E5:F6:...:YOUR_RELEASE_FINGERPRINT';
+
+  /// Returns true if the APK signature matches the expected certificate.
+  Future<bool> isSignatureValid() async {
+    try {
+      final fingerprint = await _channel.invokeMethod<String>(
+        'getSignatureFingerprint',
+      );
+      return fingerprint == _expectedFingerprint;
+    } on PlatformException {
+      // If we cannot verify, assume compromised
+      return false;
+    }
+  }
+}
+```
+
+The native Android side:
+
+```kotlin title="android/app/src/main/kotlin/.../SecurityPlugin.kt"
+class SecurityPlugin : MethodCallHandler {
+    private val context: Context
+
+    constructor(context: Context) {
+        this.context = context
+    }
+
+    override fun onMethodCall(call: MethodCall, result: Result) {
+        if (call.method == "getSignatureFingerprint") {
+            try {
+                val packageInfo = context.packageManager.getPackageInfo(
+                    context.packageName,
+                    PackageManager.GET_SIGNING_CERTIFICATES
+                )
+                val signatures = packageInfo.signingInfo.apkContentsSigners
+                val cert = signatures[0].toByteArray()
+                val md = MessageDigest.getInstance("SHA-256")
+                val digest = md.digest(cert)
+                val fingerprint = digest.joinToString(":") {
+                    String.format("%02X", it)
+                }
+                result.success(fingerprint)
+            } catch (e: Exception) {
+                result.error("SIGNATURE_ERROR", e.message, null)
+            }
+        } else {
+            result.notImplemented()
+        }
+    }
+}
+```
+
+---
+
+## What Obfuscation Does NOT Protect
+
+Obfuscation is a speed bump, not a wall. Be clear about its limitations:
+
+| Protected | NOT Protected |
+|-----------|---------------|
+| Class and method names | String literals (API URLs, keys) |
+| Control flow (partially) | Network traffic patterns |
+| Field names | Business logic (can be traced through execution flow) |
+| Enum value names | Assets bundled in the APK (images, JSON configs) |
+
+:::info Strings Are Still Visible
+Even after obfuscation, string literals like API endpoints and error messages remain in the binary. To protect sensitive strings, encrypt them and decrypt at runtime -- or fetch them from a server-side configuration service rather than embedding them in the app.
+:::
+
+---
+
+## Before and After
+<Tabs>
+<TabItem value="before" label="Before (Vulnerable)">
+
+```bash title="Build command"
+flutter build apk --release
+```
+
+**Snapshot analysis yields:**
+```
+EncryptionService._deriveKey
+AuthController.validatePin
+https://api.fortknox.example.com/v1
+/admin/audit-log
+```
+
+No root detection. No signature verification. An attacker can decompile, understand, modify, and re-sign the APK.
+</TabItem>
+<TabItem value="after" label="After (Hardened)">
+
+```bash title="Build command"
+flutter build apk --release \
+  --obfuscate \
+  --split-debug-info=build/debug-info/
+```
+
+**Snapshot analysis yields:**
+```
+a0.b3
+c_1.d7
+```
+
+R8 shrinks native code. Root/jailbreak detection warns users and restricts features. Signature verification catches re-signed APKs.
+</TabItem>
+</Tabs>
+
+---
+
+## Deep Dive
+
+- [OWASP M8: Code Tampering](https://owasp.org/www-project-mobile-top-10/) -- How attackers modify mobile app binaries and the defences that detect it.
+- [OWASP M9: Reverse Engineering](https://owasp.org/www-project-mobile-top-10/) -- Techniques attackers use to decompile, deobfuscate, and analyse mobile apps.
+- [Flutter Obfuscation Documentation](https://docs.flutter.dev/deployment/obfuscate) -- Official guide to Dart obfuscation flags and debug info management.
+- [Android R8 / ProGuard](https://developer.android.com/build/shrink-code) -- Google's documentation on code shrinking, obfuscation, and optimisation for Android.
+- [Google Play Integrity API](https://developer.android.com/google/play/integrity) -- Hardware-backed device attestation that verifies app integrity, device integrity, and licensing status.
+
+---
+
+## What's Next
+
+Your code is obfuscated, your devices are checked, and tampered builds are detected. But all this security is useless if you cannot see what is happening in production. In **Chapter 8: Watchtower**, you will build a security logging and monitoring system that alerts you to suspicious activity in real time.

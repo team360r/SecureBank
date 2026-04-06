@@ -1,0 +1,74 @@
+---
+sidebar_position: 3
+title: "Quiz: Hardened Inputs"
+---
+
+import { Quiz, QuizQuestion } from '@site/src/components/Quiz';
+
+# Quiz: Hardened Inputs
+
+Test your understanding of input validation and injection prevention.
+
+<Quiz chapterId="ch06-hardened-inputs">
+
+<QuizQuestion
+  question="What makes parameterised queries safe against SQL injection?"
+  options={[
+    "They encrypt the SQL statement before sending it to the database",
+    "They limit the length of user input to 50 characters",
+    "The database engine treats parameter values as data, never as SQL syntax",
+    "They remove all special characters from the input automatically"
+  ]}
+  correctIndex={2}
+  explanation="With parameterised queries, the SQL structure and the data values are sent to the database separately. The engine binds the parameter values into the prepared statement as literal data — a quote character in the input cannot break out of the value context and become SQL syntax."
+/>
+
+<QuizQuestion
+  question="Why is allowlist validation preferred over denylist validation?"
+  options={[
+    "Allowlists are faster to evaluate at runtime",
+    "Denylists can never block all possible malicious inputs — attackers constantly find new payloads",
+    "Denylists require more storage space for the blocked patterns",
+    "Allowlists automatically encrypt the validated input"
+  ]}
+  correctIndex={1}
+  explanation="A denylist tries to enumerate everything that is dangerous — an impossible task because attack payloads evolve constantly. An allowlist defines exactly what is valid (e.g. 'only digits and hyphens for a sort code') and rejects everything else. New attack vectors are blocked by default because they do not match the permitted pattern."
+/>
+
+<QuizQuestion
+  question="In the receipt WebView, what is the MOST effective single defence against XSS?"
+  options={[
+    "Adding a Content-Security-Policy meta tag",
+    "Disabling JavaScript entirely with JavaScriptMode.disabled",
+    "Using HTTPS for the WebView URL",
+    "Rendering the receipt as a PNG image"
+  ]}
+  correctIndex={1}
+  explanation="Disabling JavaScript eliminates the entire class of XSS attacks in one line. If the WebView only renders static HTML (no interactive features), there is no reason for JavaScript to be enabled. HTML entity escaping is still recommended as defence in depth, but disabling JS is the strongest single measure."
+/>
+
+<QuizQuestion
+  question="Why must the SanitizationService call stripHtml() even when the input passes the allowlist regex?"
+  options={[
+    "The regex engine cannot detect HTML tags",
+    "Some allowlist patterns permit characters like < and > that could form tags in non-validated fields",
+    "stripHtml() also removes SQL injection payloads",
+    "HTML stripping is required by OWASP for all mobile inputs"
+  ]}
+  correctIndex={1}
+  explanation="Not every field has a strict allowlist that excludes angle brackets. A 'notes' or 'comments' field might permit a wider character range for usability. In those cases, stripHtml() provides a second layer of defence by removing any markup that slipped through the pattern — defence in depth."
+/>
+
+<QuizQuestion
+  question="A developer uses Drift's type-safe API: select(transactions)..where((t) => t.recipientName.like('%$query%')). Is this safe?"
+  options={[
+    "No — the $ interpolation means the query is still vulnerable to injection",
+    "Yes — Drift's .like() method uses parameterised binding under the hood, so the interpolated value becomes a bound parameter",
+    "Only if the query is less than 50 characters long",
+    "Only on iOS — Android SQLite does not support parameterised LIKE queries"
+  ]}
+  correctIndex={1}
+  explanation="Drift's type-safe expression API, including .like(), generates parameterised queries. The Dart string interpolation constructs the parameter VALUE, but Drift binds that value as a parameter — it never concatenates it into the SQL string. The '$query' is used to build the Dart string '%$query%', which then becomes a single bound parameter in the generated SQL."
+/>
+
+</Quiz>

@@ -1,0 +1,62 @@
+---
+sidebar_position: 3
+title: "Quiz: Behind Closed Doors"
+---
+
+import { Quiz, QuizQuestion } from '@site/src/components/Quiz';
+
+# Quiz: Behind Closed Doors
+
+Test your understanding of obfuscation, tamper detection, and device integrity.
+
+<Quiz chapterId="ch07-obfuscation">
+
+<QuizQuestion
+  question="What does the --split-debug-info flag do, and why is it required alongside --obfuscate?"
+  options={[
+    "It splits the APK into multiple smaller files for faster downloads",
+    "It extracts debug symbols to a separate directory, which are needed to symbolicate crash reports after obfuscation renames everything",
+    "It removes all debug logging statements from the Dart source code",
+    "It enables R8 code shrinking on the native Android layer"
+  ]}
+  correctIndex={1}
+  explanation="The --obfuscate flag requires --split-debug-info because obfuscation renames classes and methods to meaningless identifiers. Without the debug info mapping, crash reports would show 'a0.b3' instead of 'EncryptionService._deriveKey', making them impossible to diagnose. The debug info directory is the mapping file — store it securely but never ship it with the app."
+/>
+
+<QuizQuestion
+  question="Why can't file-system checks reliably detect all rooted Android devices?"
+  options={[
+    "Android does not allow apps to read the file system",
+    "Root management tools like Magisk use systemless root that does not modify /system, hiding traditional indicators",
+    "File-system checks only work on Android versions below 10",
+    "Google Play Protect blocks all root detection code"
+  ]}
+  correctIndex={1}
+  explanation="Magisk and similar tools implement 'systemless root' by modifying the boot image rather than the /system partition. Traditional checks that look for /system/bin/su or Superuser.apk find nothing. For stronger assurance, use server-side attestation like Google's Play Integrity API, which provides hardware-backed verification."
+/>
+
+<QuizQuestion
+  question="After obfuscation, which of the following is still visible in the compiled binary?"
+  options={[
+    "Class names like EncryptionService",
+    "Method names like _deriveKey",
+    "String literals like the API base URL",
+    "Field names like _secureStorage"
+  ]}
+  correctIndex={2}
+  explanation="Dart obfuscation renames classes, methods, and fields to short identifiers, but string literals are preserved in the binary. API URLs, error messages, and any other hardcoded strings remain readable. To protect sensitive strings, encrypt them and decrypt at runtime, or fetch them from a secure server-side configuration."
+/>
+
+<QuizQuestion
+  question="What is the purpose of APK signature verification in the app?"
+  options={[
+    "It verifies the user's identity before allowing login",
+    "It detects if the APK was modified and re-signed with a different certificate, indicating tampering",
+    "It encrypts the APK before uploading to the Play Store",
+    "It checks that the app was downloaded from the official app store"
+  ]}
+  correctIndex={1}
+  explanation="Every APK is signed with a developer certificate. If an attacker decompiles the APK, modifies it (e.g. removing security checks or injecting logging), and re-signs it, the signature fingerprint changes. By comparing the runtime fingerprint against the expected release certificate fingerprint, the app detects that it has been tampered with."
+/>
+
+</Quiz>

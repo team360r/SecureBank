@@ -1,0 +1,63 @@
+---
+sidebar_position: 3
+slug: /chapters/pen-test/quiz
+title: "Chapter 10: Quiz"
+---
+
+import { Quiz, QuizQuestion } from '@site/src/components/Quiz';
+
+# Chapter 10: Penetration Test — Quiz
+
+Test your understanding of static analysis, dependency auditing, and CI security pipelines.
+
+<Quiz chapterId="pen-test">
+
+<QuizQuestion
+  question="What is the primary purpose of setting avoid_print to 'error' severity in analysis_options.yaml?"
+  options={[
+    "To improve application performance by removing print overhead",
+    "To ensure developers use SecureLogger instead, preventing PII from reaching system logs",
+    "To comply with Dart style guide recommendations for production code",
+    "To reduce the size of the compiled binary by eliminating print calls"
+  ]}
+  correctIndex={1}
+  explanation="By treating avoid_print as an error, the Dart analyzer will fail the build if any print() call exists in the codebase. This forces developers to use SecureLogger (which redacts PII and respects log levels) instead of print() (which writes everything to system logs where other apps can read it)."
+/>
+
+<QuizQuestion
+  question="What does 'dart pub audit' check for?"
+  options={[
+    "Code style violations in your Dart source files",
+    "Known security vulnerabilities in your resolved dependencies via the OSV database",
+    "Unused dependencies that should be removed from pubspec.yaml",
+    "Licence compliance issues with your transitive dependency tree"
+  ]}
+  correctIndex={1}
+  explanation="dart pub audit queries the Open Source Vulnerabilities (OSV) database to check whether any of your resolved dependencies (direct or transitive) have known security advisories. It reports the advisory ID, severity, and affected version ranges so you can upgrade or find alternatives."
+/>
+
+<QuizQuestion
+  question="Why should the security-scan job be configured as a required status check with branch protection?"
+  options={[
+    "It makes the CI pipeline run faster by prioritising security checks",
+    "It prevents any code from merging to main unless all security checks pass, removing reliance on human discipline",
+    "It automatically fixes security issues before the code is merged",
+    "It is required by GitHub's terms of service for repositories containing sensitive code"
+  ]}
+  correctIndex={1}
+  explanation="Branch protection with required status checks means that a PR cannot be merged unless the security-scan job passes. This removes the human factor — no matter how rushed a developer is, they cannot bypass static analysis, secret scanning, or dependency auditing. The pipeline becomes the security perimeter."
+/>
+
+<QuizQuestion
+  question="During a manual penetration test of a Flutter banking app, which check verifies that certificate pinning is working?"
+  options={[
+    "Decompiling the APK and searching for certificate hash strings in the binary",
+    "Running the app through a proxy like Burp Suite and confirming that HTTPS requests are rejected when intercepted",
+    "Checking that the app uses the https:// scheme in all API URL constants",
+    "Verifying that the app displays a padlock icon in the UI during network requests"
+  ]}
+  correctIndex={1}
+  explanation="The definitive test for certificate pinning is running the app through an intercepting proxy (Burp Suite, mitmproxy, Charles). If pinning is working correctly, the app will refuse to complete TLS handshakes with the proxy's certificate, and all API requests will fail. Simply using HTTPS or checking URL strings does not verify that pinning is enforced."
+/>
+
+</Quiz>

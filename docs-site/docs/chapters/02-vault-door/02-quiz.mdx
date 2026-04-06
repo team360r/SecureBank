@@ -1,0 +1,58 @@
+---
+sidebar_position: 3
+slug: /chapters/vault-door/quiz
+title: "Quiz: The Vault Door"
+---
+
+import { Quiz, QuizQuestion } from '@site/src/components/Quiz';
+
+# Quiz: The Vault Door
+
+Test your understanding of secure data storage on mobile platforms.
+
+<Quiz chapterId="vault-door">
+  <QuizQuestion
+    question="On Android, SharedPreferences stores data as:"
+    options={[
+      "AES-encrypted binary files in the app sandbox",
+      "Plaintext XML files in /data/data/<package>/shared_prefs/",
+      "Entries in the Android Keystore protected by biometric authentication",
+      "SQLite database rows encrypted with the device PIN",
+    ]}
+    correctIndex={1}
+    explanation="SharedPreferences writes plaintext XML files to the app's private directory. On a rooted device, these files can be read directly using ADB or a file manager. This is why SharedPreferences must never be used for tokens, keys, or any sensitive data."
+  />
+  <QuizQuestion
+    question="Which iOS Keychain accessibility level is MOST appropriate for storing authentication tokens in a banking app?"
+    options={[
+      "KeychainAccessibility.always — so tokens are available even when the device is locked",
+      "KeychainAccessibility.first_unlock_this_device — available after first unlock, not included in backups",
+      "KeychainAccessibility.when_passcode_set_this_device — requires a passcode to access",
+      "KeychainAccessibility.always_this_device — always available but not backed up",
+    ]}
+    correctIndex={1}
+    explanation="first_unlock_this_device provides the best balance for auth tokens. Tokens are available after the user first unlocks their device (so background refreshes work), but they are excluded from iCloud and iTunes backups. This prevents token extraction from backup files while keeping the app functional."
+  />
+  <QuizQuestion
+    question="Your app needs to store the user's preferred currency (GBP, EUR, USD). Which storage mechanism should you use?"
+    options={[
+      "flutter_secure_storage — all data should be encrypted",
+      "SharedPreferences — this is a non-sensitive user preference",
+      "A server-side database — never store anything locally",
+      "An encrypted SQLite database — local data must always be encrypted",
+    ]}
+    correctIndex={1}
+    explanation="Currency preference is a non-sensitive setting with no security impact. SharedPreferences is the correct choice for simple user preferences. Over-encrypting non-sensitive data adds unnecessary complexity and performance overhead without improving security. Save flutter_secure_storage for actual secrets like authentication tokens."
+  />
+  <QuizQuestion
+    question="Why should API keys never be stored on the client, even in flutter_secure_storage?"
+    options={[
+      "flutter_secure_storage has a size limit that API keys might exceed",
+      "API keys change too frequently for local storage to keep up",
+      "A determined attacker can still extract data from secure storage at runtime via memory inspection or instrumentation frameworks",
+      "flutter_secure_storage does not support string values longer than 256 characters",
+    ]}
+    correctIndex={2}
+    explanation="Even with secure storage, a determined attacker can use runtime instrumentation tools like Frida to hook into your app's memory and read decrypted values. The fundamental problem is that any secret stored on a client device is accessible to the device owner. API keys should live exclusively on your server, where you control the environment completely."
+  />
+</Quiz>

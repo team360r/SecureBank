@@ -1,0 +1,340 @@
+---
+sidebar_position: 2
+slug: /chapters/pen-test/part-2
+title: "Chapter 10: Penetration Test — Part 2"
+---
+
+import Tabs from '@theme/Tabs';
+import TabItem from '@theme/TabItem';
+
+# Chapter 10: Penetration Test — Part 2
+
+> *"If it is not in the pipeline, it does not exist."* — DevSecOps proverb
+
+**Estimated time:** ~30 minutes | **Focus:** CI/CD Security Pipeline | **Branch:** `chapter-10-pen-test`
+
+---
+
+## SAST Tools for Dart
+
+Static Application Security Testing (SAST) analyses source code without running it. Beyond the custom lints from Part 1, you should integrate additional analysis layers.
+
+### Dart Analyzer in CI Mode
+
+The Dart analyzer can be run with machine-readable output for CI integration:
+
+```bash title="Terminal"
+# Run analysis and fail on any issue.
+dart analyze --fatal-infos --fatal-warnings
+
+# Run custom_lint rules alongside.
+dart run custom_lint
+```
+
+### Security-Focused Analysis Script
+
+Create a comprehensive analysis script that combines multiple checks:
+
+```dart title="tool/security_scan.dart"
+import 'dart:io';
+
+/// Runs a multi-layered security scan across the FortKnox codebase.
+Future<void> main() async {
+  final results = <String, bool>{};
+
+  stdout.writeln('=== FortKnox Security Scan ===\n');
+
+  // 1. Dart static analysis.
+  stdout.writeln('[1/5] Running dart analyze...');
+  results['dart_analyze'] = await _runCheck(
+    'dart', ['analyze', '--fatal-infos', '--fatal-warnings'],
+  );
+
+  // 2. Custom lint rules.
+  stdout.writeln('[2/5] Running custom_lint...');
+  results['custom_lint'] = await _runCheck(
+    'dart', ['run', 'custom_lint'],
+  );
+
+  // 3. Dependency audit.
+  stdout.writeln('[3/5] Auditing dependencies...');
+  results['dep_audit'] = await _runCheck(
+    'dart', ['pub', 'audit'],
+  );
+
+  // 4. Check for hardcoded secrets using grep patterns.
+  stdout.writeln('[4/5] Scanning for hardcoded secrets...');
+  results['secret_scan'] = await _secretScan();
+
+  // 5. Check for insecure HTTP URLs.
+  stdout.writeln('[5/5] Checking for insecure HTTP URLs...');
+  results['http_scan'] = await _httpScan();
+
+  // Summary.
+  stdout.writeln('\n=== Results ===');
+  var allPassed = true;
+  for (final entry in results.entries) {
+    final status = entry.value ? 'PASS' : 'FAIL';
+    final icon = entry.value ? '+' : 'X';
+    stdout.writeln('  [$icon] ${entry.key}: $status');
+    if (!entry.value) allPassed = false;
+  }
+
+  if (!allPassed) {
+    stderr.writeln('\nSecurity scan FAILED. Fix issues before merging.');
+    exit(1);
+  }
+
+  stdout.writeln('\nAll security checks passed.');
+}
+
+Future<bool> _runCheck(String executable, List<String> args) async {
+  final result = await Process.run(executable, args);
+  if (result.exitCode != 0) {
+    stderr.writeln(result.stderr);
+    return false;
+  }
+  return true;
+}
+
+Future<bool> _secretScan() async {
+  final patterns = [
+    r'sk_live_\w+',
+    r'sk_test_\w+',
+    r'AIza[0-9A-Za-z_-]{35}',
+    r'ghp_[0-9A-Za-z]{36}',
+    r'password\s*=\s*["\x27][^"\x27]+["\x27]',
+  ];
+
+  for (final pattern in patterns) {
+    final result = await Process.run('grep', [
+      '-rn', '-E', pattern, 'lib/', '--include=*.dart',
+    ]);
+    if (result.exitCode == 0 && (result.stdout as String).trim().isNotEmpty) {
+      stderr.writeln('SECRET FOUND:\n${result.stdout}');
+      return false;
+    }
+  }
+  return true;
+}
+
+Future<bool> _httpScan() async {
+  final result = await Process.run('grep', [
+    '-rn', r'http://', 'lib/', '--include=*.dart',
+  ]);
+
+  if (result.exitCode == 0) {
+    final matches = (result.stdout as String).trim();
+    if (matches.isNotEmpty) {
+      // Filter out false positives (localhost in dev).
+      final lines = matches.split('\n').where(
+        (line) => !line.contains('localhost') && !line.contains('127.0.0.1'),
+      );
+      if (lines.isNotEmpty) {
+        stderr.writeln('INSECURE HTTP URLs found:\n${lines.join('\n')}');
+        return false;
+      }
+    }
+  }
+  return true;
+}
+```
+
+## GitHub Actions Security Pipeline
+
+Automate everything. No human should be responsible for remembering to run security checks.
+
+```yaml title=".github/workflows/security.yml"
+name: Security Pipeline
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+  security-events: write  # For uploading SARIF results.
+
+jobs:
+  security-scan:
+    name: Security Scan
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.22.0'
+          channel: stable
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      # highlight-start
+      - name: Static analysis
+        run: dart analyze --fatal-infos --fatal-warnings
+
+      - name: Custom security lints
+        run: dart run custom_lint
+
+      - name: Dependency audit
+        run: dart pub audit
+
+      - name: Secret scan
+        run: dart run tool/security_scan.dart
+
+      - name: Unit tests
+        run: flutter test
+      # highlight-end
+
+  dependency-review:
+    name: Dependency Review
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+    steps:
+      - uses: actions/checkout@v4
+
+      # highlight-start
+      - name: Dependency Review
+        uses: actions/dependency-review-action@v4
+        with:
+          fail-on-severity: moderate
+          deny-licenses: GPL-3.0, AGPL-3.0
+      # highlight-end
+
+  licence-check:
+    name: Licence Compliance
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.22.0'
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      # highlight-start
+      - name: Check licences
+        run: |
+          dart pub deps --json | dart run tool/check_licences.dart
+      # highlight-end
+```
+
+:::caution Branch Protection
+The pipeline is only useful if it is **mandatory**. In your GitHub repository settings, enable branch protection on `main` with these rules: require status checks to pass, require the `security-scan` job to pass, require pull request reviews, and disable force push.
+:::
+
+## Manual Penetration Test Checklist
+
+Automated scans catch known patterns. Manual testing catches business logic flaws. Use this checklist before every release:
+
+### Authentication & Session
+
+- [ ] Can you access authenticated screens by deep-linking directly to the route?
+- [ ] Does the session expire after the configured timeout?
+- [ ] Is the biometric prompt shown when resuming after the grace period?
+- [ ] Can you replay a captured JWT token after it has been revoked server-side?
+- [ ] Does the login screen rate-limit after 5 failed attempts?
+
+### Data Storage
+
+- [ ] Run `adb shell` and check SharedPreferences for plaintext secrets
+- [ ] On a rooted device, inspect the app's SQLite databases
+- [ ] Verify flutter_secure_storage is backed by Keychain (iOS) / EncryptedSharedPreferences (Android)
+- [ ] Check that no PII appears in application logs (`adb logcat`)
+
+### Network
+
+- [ ] Use a proxy (Burp Suite / mitmproxy) to verify certificate pinning blocks interception
+- [ ] Confirm all API calls use HTTPS (no HTTP fallback)
+- [ ] Check that request bodies do not contain unnecessary PII
+- [ ] Verify token refresh uses a secure rotation mechanism
+
+### Binary & Build
+
+- [ ] Decompile the release APK and verify obfuscation is applied
+- [ ] Check that no debug symbols remain in the release build
+- [ ] Verify `--dart-define` values are not visible in the binary
+- [ ] Confirm ProGuard / R8 rules strip sensitive class names
+
+### UI & Clipboard
+
+- [ ] Take a screenshot on Android — verify `FLAG_SECURE` blocks it
+- [ ] Open the task switcher on iOS — verify the privacy overlay appears
+- [ ] Copy an account number, wait 30 seconds, then paste — verify clipboard was cleared
+- [ ] Check that no sensitive data appears in text selection handles
+
+## Before / After
+<Tabs>
+<TabItem value="before" label="Before (No CI)">
+
+```yaml title=".github/workflows/ci.yml"
+# This file does not exist.
+```
+
+```yaml title="analysis_options.yaml"
+include: package:flutter_lints/flutter.yaml
+# No security rules.
+```
+
+**Problems:**
+- No automated security checks
+- Default lint rules only (code quality, not security)
+- No dependency auditing
+- No secret scanning
+- Security relies entirely on developer discipline
+</TabItem>
+<TabItem value="after" label="After (Security Pipeline)">
+
+```yaml title=".github/workflows/security.yml"
+name: Security Pipeline
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  security-scan:
+    steps:
+      - dart analyze --fatal-infos --fatal-warnings
+      - dart run custom_lint
+      - dart pub audit
+      - dart run tool/security_scan.dart
+      - flutter test
+
+  dependency-review:
+    steps:
+      - uses: actions/dependency-review-action@v4
+        with:
+          fail-on-severity: moderate
+```
+
+**Improvements:**
+- Every PR runs static analysis with security rules
+- Custom lint rules catch hardcoded secrets and PII logging
+- Dependencies audited against known vulnerability databases
+- Secret scanning prevents credentials from reaching the repo
+- Branch protection enforces all checks must pass
+</TabItem>
+</Tabs>
+
+## Deep Dive
+
+Explore the tools and standards behind this chapter:
+
+- [OWASP Mobile Security Testing Guide (MSTG)](https://mas.owasp.org/MASTG/) — comprehensive mobile penetration testing methodology
+- [Dart Analyzer documentation](https://dart.dev/tools/dart-analyze) — configuring and extending static analysis
+- [GitHub Dependency Review Action](https://github.com/actions/dependency-review-action) — automated dependency vulnerability and licence checks
+- [OSV (Open Source Vulnerabilities) database](https://osv.dev/) — the database powering `dart pub audit`
+- [GitHub Code Scanning with SARIF](https://docs.github.com/en/code-security/code-scanning) — uploading custom analysis results to GitHub Security tab
+
+## What's Next
+
+Your development pipeline is now a security perimeter. No vulnerable code slips through the automated gates, and you have a manual checklist for the nuances automation misses. In **Chapter 11: Deployment Lockdown**, you will harden the final mile — environment configuration, runtime integrity checks, and app attestation — before your fortress goes live.

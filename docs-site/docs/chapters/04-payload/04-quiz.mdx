@@ -1,0 +1,62 @@
+---
+sidebar_position: 3
+title: "Quiz: Guarding the Payload"
+---
+
+import { Quiz, QuizQuestion } from '@site/src/components/Quiz';
+
+# Quiz: Guarding the Payload
+
+Test your understanding of data-at-rest encryption before moving on.
+
+<Quiz chapterId="ch04-payload">
+
+<QuizQuestion
+  question="Why is AES-GCM preferred over AES-CBC for encrypting transaction data at rest?"
+  options={[
+    "GCM is faster on all hardware",
+    "GCM provides authenticated encryption, detecting tampering as well as hiding data",
+    "CBC does not support 256-bit keys",
+    "GCM produces smaller ciphertext"
+  ]}
+  correctIndex={1}
+  explanation="GCM (Galois/Counter Mode) is an authenticated encryption mode. It provides both confidentiality and integrity — if an attacker modifies the ciphertext, decryption fails. CBC provides confidentiality only and requires a separate MAC for integrity."
+/>
+
+<QuizQuestion
+  question="What is the purpose of the salt in PBKDF2 key derivation?"
+  options={[
+    "It replaces the need for an Initialisation Vector during encryption",
+    "It increases the AES key size from 128 to 256 bits",
+    "It ensures two users with the same PIN produce different derived keys, defeating rainbow tables",
+    "It is the secret component that must never be stored"
+  ]}
+  correctIndex={2}
+  explanation="A unique salt ensures that identical passphrases produce different derived keys. This defeats pre-computed lookup attacks (rainbow tables). The salt is not secret — it can be stored alongside the ciphertext — but it must be unique per user or device."
+/>
+
+<QuizQuestion
+  question="Where should the PBKDF2 salt be stored in a Flutter app?"
+  options={[
+    "Hardcoded in the Dart source as a constant",
+    "In SharedPreferences for easy access",
+    "In flutter_secure_storage, backed by Keystore / Keychain",
+    "In the Drift database alongside the encrypted data"
+  ]}
+  correctIndex={2}
+  explanation="flutter_secure_storage uses the Android Keystore and iOS Keychain — hardware-backed secure enclaves that protect values even if the device filesystem is compromised. SharedPreferences stores data in plaintext XML/plist files. Hardcoding defeats the purpose of a salt entirely."
+/>
+
+<QuizQuestion
+  question="In the EncryptionHelper, why is the IV prepended to the ciphertext before Base64 encoding?"
+  options={[
+    "The IV must be kept secret and embedding it hides it from attackers",
+    "AES-GCM requires the IV to be exactly 12 bytes, and prepending ensures this",
+    "It keeps the IV and ciphertext together so decryption is self-contained without external state",
+    "It increases the entropy of the ciphertext to resist frequency analysis"
+  ]}
+  correctIndex={2}
+  explanation="The IV is not secret — it just must be unique per encryption. Prepending it to the ciphertext is a standard pattern that keeps the encrypted payload self-contained. During decryption, you slice off the first 12 bytes to recover the IV, then decrypt the remainder."
+/>
+
+</Quiz>

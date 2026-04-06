@@ -1,0 +1,410 @@
+---
+sidebar_position: 2
+slug: /chapters/watchtower/part-2
+title: "Chapter 8: The Watchtower — Part 2"
+---
+
+import Tabs from '@theme/Tabs';
+import TabItem from '@theme/TabItem';
+
+# Chapter 8: The Watchtower — Part 2
+
+> *"In the absence of visibility, every intrusion is a surprise."* — NIST SP 800-92
+
+**Estimated time:** ~25 minutes | **Focus:** Audit Trails & Crash Reporting | **Branch:** `chapter-8-watchtower`
+
+---
+
+## Structured Logging for Audit Trails
+
+The `SecureLogger` from Part 1 prevents PII leaks, but production systems need more than safe console output. You need **structured logs** — machine-parsable records that answer: *who* did *what*, *when*, and *what was the outcome*?
+
+### Defining a Log Event
+
+Create a structured event model:
+
+```dart title="lib/utils/log_event.dart"
+/// A single structured log entry for the FortKnox audit trail.
+class LogEvent {
+  final DateTime timestamp;
+  final String level;
+  final String action;
+  final String tag;
+  final Map<String, dynamic> metadata;
+  final String? errorMessage;
+
+  LogEvent({
+    required this.level,
+    required this.action,
+    required this.tag,
+    Map<String, dynamic>? metadata,
+    this.errorMessage,
+  })  : timestamp = DateTime.now().toUtc(),
+        metadata = metadata ?? {};
+
+  Map<String, dynamic> toJson() => {
+        'timestamp': timestamp.toIso8601String(),
+        'level': level,
+        'action': action,
+        'tag': tag,
+        'metadata': metadata,
+        if (errorMessage != null) 'error': errorMessage,
+      };
+}
+```
+
+### Extending SecureLogger with Structured Output
+
+Add an audit method to the logger that emits structured events:
+
+```dart title="lib/utils/secure_logger.dart (EXTENDED)"
+import 'dart:convert';
+import 'log_event.dart';
+
+// ... existing SecureLogger code ...
+
+class SecureLogger {
+  // ... existing fields and methods ...
+
+  /// Buffer for structured events. In production, these would be
+  /// flushed to a secure backend in batches.
+  final List<LogEvent> _auditBuffer = [];
+
+  /// Maximum buffer size before auto-flush.
+  static const _maxBufferSize = 50;
+
+  /// Emit a structured audit event. Use this for security-relevant
+  /// actions: login, logout, transfer, permission changes.
+  void audit({
+    required String action,
+    required String tag,
+    LogLevel level = LogLevel.info,
+    Map<String, dynamic>? metadata,
+    String? errorMessage,
+  }) {
+    final event = LogEvent(
+      level: level.name,
+      action: action,
+      tag: tag,
+      metadata: _sanitiseMetadata(metadata ?? {}),
+      errorMessage: errorMessage,
+    );
+
+    _auditBuffer.add(event);
+
+    // Also log to the normal channel.
+    _log(level, 'AUDIT: $action', tag: tag);
+
+    if (_auditBuffer.length >= _maxBufferSize) {
+      flushAuditEvents();
+    }
+  }
+
+  /// Sanitise all values in metadata to strip PII.
+  Map<String, dynamic> _sanitiseMetadata(Map<String, dynamic> input) {
+    return input.map((key, value) {
+      if (value is String) {
+        return MapEntry(key, _redact(value));
+      }
+      return MapEntry(key, value);
+    });
+  }
+
+  /// Flush buffered events to the secure backend.
+  Future<void> flushAuditEvents() async {
+    if (_auditBuffer.isEmpty) return;
+
+    final batch = List<LogEvent>.from(_auditBuffer);
+    _auditBuffer.clear();
+
+    // In production, POST to your logging backend:
+    // await _httpClient.post('/api/audit-logs',
+    //     body: jsonEncode(batch.map((e) => e.toJson()).toList()));
+
+    if (kDebugMode) {
+      developer.log(
+        'Flushed ${batch.length} audit events',
+        name: 'FortKnox:Audit',
+      );
+    }
+  }
+}
+```
+
+### Using Audit Logging in the Transfer Service
+
+Security-sensitive operations must generate audit events:
+
+```dart title="lib/services/transfer_service.dart (SECURE)"
+import '../utils/secure_logger.dart';
+
+class TransferService {
+  Future<TransferResult> executeTransfer({
+    required String fromAccountId,
+    required String toSortCode,
+    required String toAccountNumber,
+    required double amount,
+  }) async {
+    // highlight-start
+    log.audit(
+      action: 'transfer_initiated',
+      tag: 'Transfer',
+      metadata: {
+        'from_account': fromAccountId,
+        'amount_gbp': amount,
+        // Note: sort code and account number are NOT logged.
+        // We log only the operation, not the destination PII.
+        'destination_masked': '****${toAccountNumber.substring(toAccountNumber.length - 4)}',
+      },
+    );
+    // highlight-end
+
+    try {
+      final result = await _apiClient.post('/transfers', body: {
+        'from': fromAccountId,
+        'to_sort_code': toSortCode,
+        'to_account': toAccountNumber,
+        'amount': amount,
+        'currency': 'GBP',
+      });
+
+      log.audit(
+        action: 'transfer_completed',
+        tag: 'Transfer',
+        metadata: {
+          'from_account': fromAccountId,
+          'amount_gbp': amount,
+          'reference': result.body['reference'],
+        },
+      );
+
+      return TransferResult.fromJson(result.body);
+    } catch (e) {
+      // highlight-start
+      log.audit(
+        action: 'transfer_failed',
+        tag: 'Transfer',
+        level: LogLevel.error,
+        metadata: {'from_account': fromAccountId, 'amount_gbp': amount},
+        errorMessage: e.runtimeType.toString(), // Type only, not message
+      );
+      // highlight-end
+      rethrow;
+    }
+  }
+}
+```
+
+:::tip Audit Trail Golden Rule
+Log the **action** and the **outcome**. Mask any data that could identify a person or account. A good audit log reads like a story: "Transfer initiated, transfer completed" or "Transfer initiated, transfer failed (HttpException)."
+:::
+
+## Crash Reporting Without PII
+
+Crash reports are essential, but services like Sentry and Crashlytics will happily capture everything in scope — including user emails, tokens, and financial data. You must configure them to scrub PII before transmission.
+
+### Sentry Configuration
+
+```dart title="lib/utils/crash_reporting.dart"
+import 'package:sentry_flutter/sentry_flutter.dart';
+import 'package:flutter/foundation.dart';
+
+Future<void> initialiseCrashReporting() async {
+  await SentryFlutter.init(
+    (options) {
+      options.dsn = const String.fromEnvironment('SENTRY_DSN');
+
+      // highlight-start
+      // CRITICAL: Strip PII from all events before transmission.
+      options.beforeSend = _scrubEvent;
+      options.beforeBreadcrumb = _scrubBreadcrumb;
+      // highlight-end
+
+      // Do not send crash reports in debug mode.
+      options.enabled = kReleaseMode;
+
+      // Never attach screenshots — they may show account data.
+      options.attachScreenshot = false;
+
+      // Limit breadcrumb depth to reduce PII surface.
+      options.maxBreadcrumbs = 30;
+    },
+  );
+}
+
+/// Remove PII from Sentry events before they leave the device.
+SentryEvent? _scrubEvent(SentryEvent event, Hint hint) {
+  // Strip user data entirely.
+  final scrubbed = event.copyWith(
+    user: SentryUser(id: event.user?.id), // Keep anonymous ID only.
+  );
+
+  // Remove any request body data.
+  if (scrubbed.request != null) {
+    return scrubbed.copyWith(
+      request: scrubbed.request!.copyWith(data: null, headers: null),
+    );
+  }
+
+  return scrubbed;
+}
+
+/// Scrub breadcrumbs that may contain PII.
+Breadcrumb? _scrubBreadcrumb(Breadcrumb breadcrumb, Hint hint) {
+  // Remove navigation breadcrumbs that include query parameters
+  // (which often contain user IDs or tokens).
+  if (breadcrumb.category == 'navigation') {
+    final data = Map<String, dynamic>.from(breadcrumb.data ?? {});
+    data.remove('url'); // URLs may contain tokens.
+    return breadcrumb.copyWith(data: data);
+  }
+
+  // Remove HTTP breadcrumbs that contain request/response bodies.
+  if (breadcrumb.category == 'http') {
+    final data = Map<String, dynamic>.from(breadcrumb.data ?? {});
+    data.remove('request_body');
+    data.remove('response_body');
+    data.remove('headers');
+    return breadcrumb.copyWith(data: data);
+  }
+
+  return breadcrumb;
+}
+```
+
+### Firebase Crashlytics Configuration
+
+If you use Crashlytics instead of (or alongside) Sentry:
+
+```dart title="lib/utils/crashlytics_config.dart"
+import 'package:firebase_crashlytics/firebase_crashlytics.dart';
+import 'package:flutter/foundation.dart';
+
+Future<void> initialiseCrashlytics() async {
+  // Disable in debug mode.
+  await FirebaseCrashlytics.instance
+      .setCrashlyticsCollectionEnabled(kReleaseMode);
+
+  // highlight-start
+  // NEVER set user email or name as identifiers.
+  // Use an opaque, non-reversible user ID only.
+  await FirebaseCrashlytics.instance.setUserIdentifier('user_hash_abc123');
+  // highlight-end
+
+  // Catch Flutter framework errors.
+  FlutterError.onError = (errorDetails) {
+    // highlight-next-line
+    _reportSafely(errorDetails.exception, errorDetails.stack);
+  };
+
+  // Catch errors outside Flutter framework.
+  PlatformDispatcher.instance.onError = (error, stack) {
+    _reportSafely(error, stack);
+    return true;
+  };
+}
+
+void _reportSafely(Object error, StackTrace? stack) {
+  // Only send the error type and stack trace — never the message,
+  // which may contain interpolated PII.
+  FirebaseCrashlytics.instance.recordError(
+    error.runtimeType.toString(),
+    stack,
+    // highlight-next-line
+    reason: 'See stack trace — message redacted for PII safety',
+  );
+}
+```
+
+:::caution Crashlytics Custom Keys
+Never use `setCustomKey()` with PII values. If you need to tag crashes by account state, use anonymised categories like `account_tier: "premium"` rather than `account_id: "12345678"`.
+:::
+
+## Before / After
+<Tabs>
+<TabItem value="before" label="Before (Vulnerable)">
+
+```dart title="lib/services/auth_service.dart"
+class AuthService {
+  Future<bool> login(String email, String password) async {
+    print('LOGIN: email=$email, password=$password');
+
+    final response = await _apiClient.post('/auth/login', body: {
+      'email': email,
+      'password': password,
+    });
+
+    if (response.statusCode == 200) {
+      final token = response.body['token'];
+      print('Auth token: $token');
+      return true;
+    }
+
+    print('Login failed for $email');
+    return false;
+  }
+}
+```
+
+**Problems:**
+- Email and password printed to console
+- JWT token exposed in logs
+- No structured audit trail
+- No log levels or redaction
+- PII reaches crash reporters unchecked
+</TabItem>
+<TabItem value="after" label="After (Secure)">
+
+```dart title="lib/services/auth_service.dart"
+import '../utils/secure_logger.dart';
+
+class AuthService {
+  Future<bool> login(String email, String password) async {
+    log.audit(
+      action: 'login_attempted',
+      tag: 'Auth',
+    );
+
+    final response = await _apiClient.post('/auth/login', body: {
+      'email': email,
+      'password': password,
+    });
+
+    if (response.statusCode == 200) {
+      log.audit(action: 'login_succeeded', tag: 'Auth');
+      return true;
+    }
+
+    log.audit(
+      action: 'login_failed',
+      tag: 'Auth',
+      level: LogLevel.warning,
+      metadata: {'status_code': response.statusCode},
+    );
+    return false;
+  }
+}
+```
+
+**Improvements:**
+- Zero PII in any log output
+- Structured audit events for security monitoring
+- Automatic redaction as a safety net
+- Log levels respected per environment
+- Crash reports scrubbed before transmission
+</TabItem>
+</Tabs>
+
+## Deep Dive
+
+Explore the security principles behind this chapter:
+
+- [OWASP Mobile Top 10 — M3: Insecure Authentication/Authorization](https://owasp.org/www-project-mobile-top-10/) — logging credentials is a subset of this risk category
+- [OWASP Logging Cheat Sheet](https://cheatsheetseries.owasp.org/cheatsheets/Logging_Cheat_Sheet.html) — comprehensive guide to secure logging practices
+- [Sentry Data Scrubbing](https://docs.sentry.io/product/data-management-settings/scrubbing/) — server-side and client-side PII scrubbing configuration
+- [Firebase Crashlytics Best Practices](https://firebase.google.com/docs/crashlytics/customize-crash-reports) — customising reports without exposing user data
+- [dart:developer library documentation](https://api.dart.dev/stable/dart-developer/dart-developer-library.html) — why `developer.log` is safer than `print()`
+
+## What's Next
+
+Your FortKnox app now has eyes that see without compromising what they observe. But the watchtower only monitors — it does not challenge intruders at the gate. In **Chapter 9: Biometric Checkpoint**, you will add biometric re-authentication, prevent screenshots of sensitive screens, and lock the app the moment it leaves the foreground.

@@ -1,0 +1,52 @@
+/* ── Hero ─── */
+.hero { background: linear-gradient(135deg, #7A5800 0%, #B8860B 50%, #D4A017 100%); color: #ffffff; padding: 5rem 1.5rem 4rem; text-align: center; }
+.heroInner { max-width: 720px; margin: 0 auto; }
+.heroPre { font-size: 0.85rem; font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase; opacity: 0.75; margin-bottom: 0.75rem; }
+.heroTitle { font-size: clamp(2.8rem, 8vw, 4.5rem); font-weight: 800; letter-spacing: -2px; margin: 0 0 1rem; line-height: 1.05; }
+.heroTagline { font-size: clamp(1rem, 2.5vw, 1.2rem); opacity: 0.9; line-height: 1.6; margin-bottom: 2.5rem; }
+.heroButtons { display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap; }
+
+/* ── Buttons ─── */
+.btnPrimary { display: inline-block; background: #ffffff; color: #B8860B; font-weight: 700; font-size: 1rem; padding: 0.85rem 2rem; border-radius: 8px; text-decoration: none; transition: background 0.15s, transform 0.1s; }
+.btnPrimary:hover { background: #FFF8E1; color: #7A5800; text-decoration: none; transform: translateY(-1px); }
+.btnSecondary { display: inline-block; background: rgba(255,255,255,0.15); color: #ffffff; font-weight: 600; font-size: 1rem; padding: 0.85rem 2rem; border-radius: 8px; border: 1.5px solid rgba(255,255,255,0.5); text-decoration: none; transition: background 0.15s, transform 0.1s; }
+.btnSecondary:hover { background: rgba(255,255,255,0.25); color: #ffffff; text-decoration: none; transform: translateY(-1px); }
+
+/* ── Shared layout ─── */
+.container { max-width: 960px; margin: 0 auto; padding: 0 1.5rem; }
+.sectionTitle { font-size: 1.8rem; font-weight: 700; letter-spacing: -0.5px; margin-bottom: 0.5rem; text-align: center; }
+.sectionSubtitle { text-align: center; opacity: 0.7; margin-bottom: 2.5rem; font-size: 1rem; }
+
+/* ── Features ─── */
+.features { padding: 4rem 0; background: var(--ifm-background-surface-color); }
+.featureGrid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 1.5rem; }
+.featureCard { background: var(--ifm-background-color); border: 1px solid var(--ifm-color-emphasis-200); border-radius: 12px; padding: 2rem 1.5rem; text-align: center; }
+.featureIcon { font-size: 2rem; margin-bottom: 1rem; font-weight: 700; color: var(--ifm-color-primary); }
+.featureTitle { font-size: 1.1rem; font-weight: 700; margin-bottom: 0.5rem; }
+.featureDesc { font-size: 0.95rem; opacity: 0.8; line-height: 1.6; margin: 0; }
+
+/* ── Chapter Roadmap ─── */
+.roadmap { padding: 4rem 0; }
+.chapterList { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 0.75rem; }
+.chapterItem { display: flex; align-items: flex-start; gap: 1rem; background: var(--ifm-background-surface-color); border: 1px solid var(--ifm-color-emphasis-200); border-radius: 10px; padding: 1rem 1.25rem; transition: border-color 0.15s; }
+.chapterItem:hover { border-color: var(--ifm-color-primary); }
+.chapterNum { flex-shrink: 0; width: 32px; height: 32px; border-radius: 50%; background: var(--ifm-color-primary); color: #ffffff; font-weight: 700; font-size: 0.85rem; display: flex; align-items: center; justify-content: center; margin-top: 2px; }
+[data-theme='dark'] .chapterNum { color: #3E2F00; }
+.chapterBody { flex: 1; min-width: 0; }
+.chapterHeader { display: flex; align-items: baseline; gap: 0.75rem; flex-wrap: wrap; margin-bottom: 0.25rem; }
+.chapterTitle { font-size: 1rem; font-weight: 600; }
+.chapterTime { font-size: 0.8rem; opacity: 0.55; white-space: nowrap; }
+.chapterDesc { font-size: 0.9rem; opacity: 0.75; margin: 0; line-height: 1.5; }
+
+/* ── Quick Start ─── */
+.quickstart { padding: 4rem 0; background: var(--ifm-background-surface-color); }
+.quickstartGrid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 1.25rem; }
+.codeBlock { background: var(--ifm-background-color); border: 1px solid var(--ifm-color-emphasis-200); border-radius: 10px; padding: 1.25rem; }
+.codeLabel { font-size: 0.8rem; font-weight: 600; letter-spacing: 0.05em; text-transform: uppercase; opacity: 0.6; margin-bottom: 0.75rem; }
+.pre { margin: 0; font-size: 0.85rem; white-space: pre; overflow-x: auto; background: none; padding: 0; border: none; }
+
+/* ── CTA ─── */
+.cta { padding: 5rem 0; background: #7A5800; color: #ffffff; text-align: center; }
+[data-theme='dark'] .cta { background: #3E2F00; }
+.ctaTitle { font-size: clamp(1.5rem, 4vw, 2.2rem); font-weight: 700; letter-spacing: -0.5px; margin-bottom: 1rem; color: #ffffff; }
+.ctaSubtitle { font-size: 1rem; opacity: 0.85; margin-bottom: 2rem; max-width: 560px; margin-left: auto; margin-right: auto; line-height: 1.6; }

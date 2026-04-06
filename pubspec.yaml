@@ -1,0 +1,42 @@
+name: fortknox
+description: "FortKnox — A deliberately vulnerable Flutter banking app for the Fort Knox security tutorial."
+publish_to: 'none'
+version: 1.0.0+1
+
+environment:
+  sdk: ^3.4.0
+  flutter: ">=3.22.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+  cupertino_icons: ^1.0.6
+  google_fonts: ^6.1.0
+  go_router: ^14.0.0
+  flutter_riverpod: ^2.6.0
+  riverpod_annotation: ^2.4.0
+  drift: ^2.20.0
+  sqlite3_flutter_libs: ^0.5.0
+  path_provider: ^2.1.0
+  path: ^1.9.0
+  http: ^1.2.0
+  intl: ^0.19.0
+  flutter_secure_storage: ^9.0.0
+  encrypt: ^5.0.3
+  local_auth: ^2.2.0
+  logger: ^2.0.0
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  integration_test:
+    sdk: flutter
+  flutter_lints: ^4.0.0
+  build_runner: ^2.4.0
+  drift_dev: ^2.20.0
+  riverpod_generator: ^2.4.0
+  custom_lint: ^0.6.0
+  riverpod_lint: ^2.3.0
+
+flutter:
+  uses-material-design: true

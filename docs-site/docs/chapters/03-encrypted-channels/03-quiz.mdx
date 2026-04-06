@@ -1,0 +1,58 @@
+---
+sidebar_position: 3
+slug: /chapters/encrypted-channels/quiz
+title: "Quiz: Encrypted Channels"
+---
+
+import { Quiz, QuizQuestion } from '@site/src/components/Quiz';
+
+# Quiz: Encrypted Channels
+
+Test your understanding of HTTPS enforcement, certificate pinning, and network security configuration.
+
+<Quiz chapterId="encrypted-channels">
+  <QuizQuestion
+    question="Why is HTTPS alone not sufficient to prevent all man-in-the-middle attacks on a mobile app?"
+    options={[
+      "HTTPS encryption can be broken by modern computers in real time",
+      "An attacker who installs a rogue CA certificate on the device can generate trusted certificates for any domain",
+      "HTTPS only encrypts the request body, not the headers or URL",
+      "Mobile operating systems do not properly implement TLS",
+    ]}
+    correctIndex={1}
+    explanation="HTTPS relies on the device's trust store of Certificate Authorities. If an attacker installs their own CA certificate (possible on rooted/jailbroken devices or via corporate MDM profiles), they can generate certificates that the device considers valid for any domain. Certificate pinning solves this by restricting trust to specific certificates or public keys, regardless of the device trust store."
+  />
+  <QuizQuestion
+    question="You pin a single certificate hash for your API server. Six months later, the server's TLS certificate is renewed with a new key pair. What happens to users who have not updated the app?"
+    options={[
+      "The app automatically fetches the new pin from the server",
+      "The OS trust store overrides the pin and allows the connection",
+      "The app refuses all connections to the server — it is effectively bricked for that API",
+      "The app falls back to standard CA validation after the pin expires",
+    ]}
+    correctIndex={2}
+    explanation="With only one pin and a new server key, the pin check fails permanently. The app cannot connect to the server at all. This is why you must always pin at least two keys: the current one and a pre-generated backup. On Android, the Network Security Config's pin-set expiration attribute provides a safety valve that falls back to CA validation after a set date."
+  />
+  <QuizQuestion
+    question="In Android's Network Security Config, what does setting cleartextTrafficPermitted='false' in base-config achieve?"
+    options={[
+      "It encrypts all SharedPreferences data at rest",
+      "It blocks all HTTP (non-HTTPS) traffic from the app, including from third-party libraries",
+      "It enables certificate pinning for all domains automatically",
+      "It forces the app to use HTTP/2 instead of HTTP/1.1",
+    ]}
+    correctIndex={1}
+    explanation="Setting cleartextTrafficPermitted to false in the base-config blocks all unencrypted HTTP traffic at the OS level, regardless of which library or code path initiates the request. This is a defence-in-depth measure that catches any HTTP calls you might have missed in your code, including those from third-party packages."
+  />
+  <QuizQuestion
+    question="Your app catches a HandshakeException during an API call. The user is on a corporate Wi-Fi network. What is the MOST appropriate response?"
+    options={[
+      "Show the user the certificate details and ask them to verify manually",
+      "Retry the request over HTTP as a fallback",
+      "Show a generic connection error message and log the details server-side for security review",
+      "Disable certificate pinning for that network and retry",
+    ]}
+    correctIndex={2}
+    explanation="A HandshakeException on a corporate network likely means a corporate proxy is intercepting TLS traffic with its own certificate, which your pins correctly reject. The user should see a generic error (revealing pin details helps attackers). The technical details should be logged server-side so your security team can investigate. Never fall back to HTTP or disable pinning — these actions defeat the entire purpose of the security measure."
+  />
+</Quiz>

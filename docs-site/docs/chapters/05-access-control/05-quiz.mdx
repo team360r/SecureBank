@@ -1,0 +1,62 @@
+---
+sidebar_position: 3
+title: "Quiz: Need to Know"
+---
+
+import { Quiz, QuizQuestion } from '@site/src/components/Quiz';
+
+# Quiz: Need to Know
+
+Test your understanding of route guards and access control before moving on.
+
+<Quiz chapterId="ch05-access-control">
+
+<QuizQuestion
+  question="Why are client-side route guards alone insufficient for security?"
+  options={[
+    "GoRouter does not support redirect logic",
+    "An attacker can bypass the Flutter app entirely and call the API directly",
+    "Deep links are disabled on iOS by default",
+    "Client-side guards add too much latency to navigation"
+  ]}
+  correctIndex={1}
+  explanation="Client-side route guards protect the UI, but a determined attacker can reverse-engineer the API endpoints and call them directly with tools like curl or Postman. The server must independently verify the user's identity and role on every request using the Bearer token — never trusting the client alone."
+/>
+
+<QuizQuestion
+  question="In the redirect guard, what should happen when an authenticated customer navigates to /admin/audit-log?"
+  options={[
+    "Show the audit log in read-only mode",
+    "Throw an unhandled exception to crash the app",
+    "Redirect to the dashboard because the customer role lacks admin access",
+    "Log the user out immediately"
+  ]}
+  correctIndex={2}
+  explanation="The role check sees that UserRole.customer does not have access to a route requiring UserRole.admin, so the guard redirects to the dashboard. Crashing or logging out would be hostile to the user — they might have mistyped a URL or tapped a stale bookmark."
+/>
+
+<QuizQuestion
+  question="What is the risk of blindly redirecting to a 'redirect' query parameter after login?"
+  options={[
+    "It slows down the login flow",
+    "An attacker could craft an open redirect to an external phishing site",
+    "GoRouter does not support query parameters",
+    "The redirect parameter is always encrypted"
+  ]}
+  correctIndex={1}
+  explanation="If you redirect to whatever URL is in the 'redirect' parameter without validation, an attacker can craft a deep link like /login?redirect=https://evil.com. After login, the user is sent to the attacker's site. Always validate that the redirect target is a relative path within your app and that the user's role permits access."
+/>
+
+<QuizQuestion
+  question="Why does the ParamValidators class check that an account ID belongs to the current user, not just that it matches the format pattern?"
+  options={[
+    "Format-only validation rejects all deep links",
+    "Account IDs are sequential, so an attacker could guess another user's valid ID",
+    "The regex pattern is too slow for real-time validation",
+    "Flutter requires ownership checks for all route parameters"
+  ]}
+  correctIndex={1}
+  explanation="Format validation (regex) confirms the structure is correct but says nothing about ownership. An attacker who knows the pattern (ACC-NNNN-XX) can enumerate valid IDs. Ownership validation ensures the authenticated user can only access their own accounts, preventing Insecure Direct Object References (IDOR)."
+/>
+
+</Quiz>

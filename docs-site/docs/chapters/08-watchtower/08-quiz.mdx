@@ -1,0 +1,63 @@
+---
+sidebar_position: 3
+slug: /chapters/watchtower/quiz
+title: "Chapter 8: Quiz"
+---
+
+import { Quiz, QuizQuestion } from '@site/src/components/Quiz';
+
+# Chapter 8: The Watchtower — Quiz
+
+Test your understanding of secure logging and crash reporting.
+
+<Quiz chapterId="watchtower">
+
+<QuizQuestion
+  question="Why is print() dangerous in a Flutter banking app?"
+  options={[
+    "It slows down the application significantly in release builds",
+    "It writes to system logs that other apps and tools can read, potentially exposing PII and secrets",
+    "It causes memory leaks when called frequently",
+    "It is deprecated in the latest Dart SDK"
+  ]}
+  correctIndex={1}
+  explanation="print() writes to stdout, which is captured by system-level logging (Android logcat, iOS os_log). Any app with READ_LOGS permission, ADB access, or CI log storage can read this output. If it contains emails, tokens, or account numbers, those secrets are exposed."
+/>
+
+<QuizQuestion
+  question="What is the primary advantage of using dart:developer log() over print()?"
+  options={[
+    "It automatically encrypts all log messages",
+    "It supports structured JSON output natively",
+    "It feeds DevTools in debug mode but does not write to platform system logs in release builds",
+    "It is faster than print() by approximately 10x"
+  ]}
+  correctIndex={2}
+  explanation="dart:developer log() sends output to the Dart DevTools inspector during development but, critically, does not write to Android logcat or iOS os_log in release builds. This means debug-time logging never reaches production system logs where it could be harvested."
+/>
+
+<QuizQuestion
+  question="When configuring Sentry for a banking app, which setting is most critical for PII protection?"
+  options={[
+    "Setting maxBreadcrumbs to a low number",
+    "Enabling performance monitoring with a low sample rate",
+    "Using beforeSend to strip user data and request bodies before events leave the device",
+    "Configuring the DSN via environment variable instead of hardcoding it"
+  ]}
+  correctIndex={2}
+  explanation="The beforeSend callback is your last line of defence before crash data leaves the device. By scrubbing user objects, request bodies, and headers in this callback, you ensure that even unexpected PII captured in an exception message or context is removed before transmission to Sentry's servers."
+/>
+
+<QuizQuestion
+  question="A structured audit log entry for a GBP transfer should include which of the following?"
+  options={[
+    "The full destination sort code and account number for traceability",
+    "The action name, outcome, amount, and a masked account reference (e.g. ****5678)",
+    "The user's email address so the security team can contact them if fraud is detected",
+    "The complete API response body for debugging failed transfers"
+  ]}
+  correctIndex={1}
+  explanation="A secure audit log records the action (transfer_initiated), outcome (completed/failed), non-sensitive metadata like amount, and masked references. Full sort codes, account numbers, emails, and response bodies are PII that must never appear in logs — even internal ones."
+/>
+
+</Quiz>

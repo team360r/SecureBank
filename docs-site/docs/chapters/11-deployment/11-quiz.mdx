@@ -1,0 +1,63 @@
+---
+sidebar_position: 3
+slug: /chapters/deployment/quiz
+title: "Chapter 11: Quiz"
+---
+
+import { Quiz, QuizQuestion } from '@site/src/components/Quiz';
+
+# Chapter 11: Deployment Lockdown — Quiz
+
+Test your understanding of environment configuration, runtime integrity, and app attestation.
+
+<Quiz chapterId="deployment">
+
+<QuizQuestion
+  question="Why must you use --dart-define instead of hardcoding API keys in Dart source files?"
+  options={[
+    "Hardcoded strings are slower to access at runtime than compile-time constants from --dart-define",
+    "The Dart compiler cannot optimise hardcoded strings but can optimise --dart-define values",
+    "Hardcoded secrets are committed to Git history and can be extracted from the compiled binary, while --dart-define values are injected at build time and kept out of source control",
+    "Flutter's app store review process automatically rejects apps with hardcoded strings"
+  ]}
+  correctIndex={2}
+  explanation="Secrets hardcoded in Dart files are committed to version control (and remain in Git history even after deletion) and can be found by decompiling the APK or IPA. Using --dart-define injects values at compile time from an external source (CI secrets, local .env files) so they never enter the repository."
+/>
+
+<QuizQuestion
+  question="Why must Play Integrity and App Attest tokens be verified on your backend server rather than on the device?"
+  options={[
+    "The tokens are encrypted and only the server has the decryption key",
+    "Google and Apple rate-limit verification requests from mobile devices",
+    "The device is the untrusted entity being verified — letting it verify its own attestation defeats the purpose",
+    "Mobile devices do not have the processing power to verify cryptographic signatures"
+  ]}
+  correctIndex={2}
+  explanation="App attestation answers the question 'Is this device and app genuine?' The device itself is the subject of that question. If you let a tampered app verify its own integrity token, the tampered code can simply return 'yes' regardless of the real verdict. Only a trusted server, communicating with Google/Apple server-to-server, can provide a reliable answer."
+/>
+
+<QuizQuestion
+  question="What is the recommended response when a release build of a banking app detects a debugger is attached?"
+  options={[
+    "Log a warning and continue running normally to avoid disrupting legitimate developers",
+    "Display a modal dialog asking the user if they are a developer",
+    "Terminate the app immediately and log an audit event, as a debugger on a release build indicates reverse engineering",
+    "Disable network access but allow the app to continue running offline"
+  ]}
+  correctIndex={2}
+  explanation="A debugger attached to a release build is a strong indicator of reverse engineering or tampering — legitimate users never encounter this. For a banking app handling financial data, the safest response is to terminate immediately and log an audit event for the security team to investigate. Continuing to run gives the attacker more time to inspect memory and extract secrets."
+/>
+
+<QuizQuestion
+  question="Which combination of flutter build flags produces the most secure release binary?"
+  options={[
+    "flutter build apk --release",
+    "flutter build apk --release --obfuscate --split-debug-info=build/symbols",
+    "flutter build apk --profile --obfuscate",
+    "flutter build apk --release --tree-shake-icons"
+  ]}
+  correctIndex={1}
+  explanation="The --release flag compiles in AOT mode without debug symbols. Adding --obfuscate renames classes, methods, and fields to meaningless identifiers, making reverse engineering significantly harder. --split-debug-info stores the debug symbol mapping separately (for crash report symbolication) so it is not included in the distributed binary. Together, these produce the most secure output."
+/>
+
+</Quiz>
