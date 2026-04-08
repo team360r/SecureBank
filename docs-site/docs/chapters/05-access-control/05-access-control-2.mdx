@@ -30,13 +30,13 @@ GoRoute(
 An attacker crafts:
 
 ```
-fortknox://app/transfer/../../admin/users
+securebank://app/transfer/../../admin/users
 ```
 
 Or passes an account ID belonging to another user:
 
 ```
-fortknox://app/transfer/ACC-9999-ADMIN
+securebank://app/transfer/ACC-9999-ADMIN
 ```
 
 ### The Validation Layer
@@ -136,7 +136,7 @@ Register the interceptor when creating the Dio client:
 ```dart title="lib/data/network/api_client.dart"
 Dio createApiClient(AuthController authController) {
   final dio = Dio(BaseOptions(
-    baseUrl: 'https://api.fortknox.example.com/v1',
+    baseUrl: 'https://api.securebank.example.com/v1',
     connectTimeout: const Duration(seconds: 10),
   ));
 

@@ -50,7 +50,7 @@ Flutter and its plugins sometimes require classes to be kept unobfuscated. Add r
 -keep class com.it_nomads.fluttersecurestorage.** { *; }
 
 # Preserve the app's signature verification class (see below)
--keep class com.fortknox.app.security.SignatureVerifier { *; }
+-keep class com.securebank.app.security.SignatureVerifier { *; }
 
 # Remove logging in release builds
 -assumenosideeffects class android.util.Log {
@@ -165,7 +165,7 @@ Future<void> _checkDeviceIntegrity() async {
         title: const Text('Security Warning'),
         content: const Text(
           'This device appears to be rooted or jailbroken. '
-          'FortKnox cannot guarantee the security of your financial '
+          'SecureBank cannot guarantee the security of your financial '
           'data on a compromised device. Some features may be restricted.',
         ),
         actions: [
@@ -197,7 +197,7 @@ Even with obfuscation, an attacker can modify your APK (inject logging, remove s
 import 'package:flutter/services.dart';
 
 class SignatureVerifier {
-  static const _channel = MethodChannel('com.fortknox.app/security');
+  static const _channel = MethodChannel('com.securebank.app/security');
 
   /// The SHA-256 fingerprint of your release signing certificate.
   /// Get this with: keytool -list -v -keystore release.keystore
@@ -285,7 +285,7 @@ flutter build apk --release
 ```
 EncryptionService._deriveKey
 AuthController.validatePin
-https://api.fortknox.example.com/v1
+https://api.securebank.example.com/v1
 /admin/audit-log
 ```
 

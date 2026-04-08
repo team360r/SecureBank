@@ -79,7 +79,7 @@ graph TD
 On a rooted Android device, reading SharedPreferences takes one command:
 
 ```bash title="Terminal (attacker's machine)"
-adb shell cat /data/data/com.fortknox.app/shared_prefs/FlutterSharedPreferences.xml
+adb shell cat /data/data/com.securebank.app/shared_prefs/FlutterSharedPreferences.xml
 ```
 
 The output is plaintext XML containing every key-value pair your app has stored, including authentication tokens, API keys, and any other secrets you carelessly placed there.
@@ -128,9 +128,9 @@ On Android 6.0+ (API 23), `flutter_secure_storage` uses `EncryptedSharedPreferen
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 class SecureTokenStorage {
-  static const _accessTokenKey = 'fortknox_access_token';
-  static const _refreshTokenKey = 'fortknox_refresh_token';
-  static const _tokenExpiryKey = 'fortknox_token_expiry';
+  static const _accessTokenKey = 'securebank_access_token';
+  static const _refreshTokenKey = 'securebank_refresh_token';
+  static const _tokenExpiryKey = 'securebank_token_expiry';
 
   final FlutterSecureStorage _storage;
 

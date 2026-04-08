@@ -17,7 +17,7 @@ import TabItem from '@theme/TabItem';
 
 ## The Vulnerability: No Security Checks in the Dev Workflow
 
-You have spent nine chapters hardening FortKnox. But what happens when a new developer joins the team and adds a `print(password)` call? Or when a dependency with a known CVE gets pulled in? Right now, nothing stops them. There are no automated gates.
+You have spent nine chapters hardening SecureBank. But what happens when a new developer joins the team and adds a `print(password)` call? Or when a dependency with a known CVE gets pulled in? Right now, nothing stops them. There are no automated gates.
 
 ```yaml title="analysis_options.yaml (VULNERABLE)"
 # Default analysis options — no security rules.
@@ -100,7 +100,7 @@ linter:
 
 ### Building a Custom Lint Package
 
-For FortKnox-specific rules that go beyond built-in lints, create a custom lint package using `custom_lint`:
+For SecureBank-specific rules that go beyond built-in lints, create a custom lint package using `custom_lint`:
 
 ```yaml title="pubspec.yaml (additions)"
 dev_dependencies:
@@ -114,9 +114,9 @@ import 'package:analyzer/dart/ast/ast.dart';
 import 'package:analyzer/error/listener.dart';
 import 'package:custom_lint_builder/custom_lint_builder.dart';
 
-PluginBase createPlugin() => _FortKnoxLints();
+PluginBase createPlugin() => _SecureBankLints();
 
-class _FortKnoxLints extends PluginBase {
+class _SecureBankLints extends PluginBase {
   @override
   List<LintRule> getLintRules(CustomLintConfigs configs) => [
         _AvoidHardcodedSecrets(),
@@ -328,5 +328,5 @@ void main() {
 ```
 
 :::info Checkpoint
-At this point you have strict static analysis that catches security anti-patterns at compile time, custom lint rules specific to FortKnox, and a dependency auditing script. In Part 2, you will wire these into a GitHub Actions pipeline so no vulnerable code can reach the main branch.
+At this point you have strict static analysis that catches security anti-patterns at compile time, custom lint rules specific to SecureBank, and a dependency auditing script. In Part 2, you will wire these into a GitHub Actions pipeline so no vulnerable code can reach the main branch.
 :::

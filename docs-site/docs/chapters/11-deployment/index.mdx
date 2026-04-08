@@ -9,7 +9,7 @@ import TabItem from '@theme/TabItem';
 
 # Chapter 11: Deployment Lockdown
 
-> *"A castle's gate is strongest when the drawbridge is raised and the portcullis is down. A mobile app is strongest when every secret is sealed and every build is signed."* — FortKnox field manual
+> *"A castle's gate is strongest when the drawbridge is raised and the portcullis is down. A mobile app is strongest when every secret is sealed and every build is signed."* — SecureBank field manual
 
 **Estimated time:** ~30 minutes | **Focus:** Build Configuration & Key Management | **Branch:** `chapter-11-deployment`
 
@@ -17,16 +17,16 @@ import TabItem from '@theme/TabItem';
 
 ## The Vulnerability: Debug Signing and Secrets in Source
 
-Open the FortKnox starter project and look at how it handles configuration:
+Open the SecureBank starter project and look at how it handles configuration:
 
 ```dart title="lib/utils/constants.dart (VULNERABLE)"
 class AppConstants {
   // highlight-start
   // API key committed to source control.
-  static const String apiKey = 'sk_live_fortknox_9a8b7c6d5e4f3g2h1i';
+  static const String apiKey = 'sk_live_securebank_9a8b7c6d5e4f3g2h1i';
 
   // API base URL hardcoded — no environment switching.
-  static const String apiBaseUrl = 'https://api.fortknox.co.uk/v1';
+  static const String apiBaseUrl = 'https://api.securebank.co.uk/v1';
 
   // Sentry DSN in source code.
   static const String sentryDsn = 'https://abc123@sentry.io/456';
@@ -85,8 +85,8 @@ Flutter's `--dart-define` flag injects compile-time constants without putting th
 
 ```bash title="Terminal"
 flutter run \
-  --dart-define=API_KEY=sk_live_fortknox_9a8b7c6d5e4f3g2h1i \
-  --dart-define=API_BASE_URL=https://api.fortknox.co.uk/v1 \
+  --dart-define=API_KEY=sk_live_securebank_9a8b7c6d5e4f3g2h1i \
+  --dart-define=API_BASE_URL=https://api.securebank.co.uk/v1 \
   --dart-define=SENTRY_DSN=https://abc123@sentry.io/456 \
   --dart-define=ENV=staging
 ```
@@ -141,7 +141,7 @@ Call `AppConfig.validate()` in `main()`:
 void main() {
   // highlight-next-line
   AppConfig.validate();
-  runApp(const FortKnoxApp());
+  runApp(const SecureBankApp());
 }
 ```
 
@@ -150,7 +150,7 @@ void main() {
 For convenience during development, use a `.env` file that is **never committed**:
 
 ```text title=".env (LOCAL ONLY — in .gitignore)"
-API_KEY=sk_test_fortknox_dev_key_123
+API_KEY=sk_test_securebank_dev_key_123
 API_BASE_URL=http://localhost:8080
 SENTRY_DSN=
 ENV=development
@@ -193,10 +193,10 @@ Generate a release keystore (do this once, store it securely):
 
 ```bash title="Terminal (one-time setup)"
 keytool -genkey -v \
-  -keystore fortknox-release.jks \
+  -keystore securebank-release.jks \
   -keyalg RSA -keysize 2048 \
   -validity 10000 \
-  -alias fortknox
+  -alias securebank
 ```
 
 Store the keystore **outside** the repository. Reference it via environment variables:
@@ -204,8 +204,8 @@ Store the keystore **outside** the repository. Reference it via environment vari
 ```properties title="android/key.properties (LOCAL ONLY — in .gitignore)"
 storePassword=your_store_password
 keyPassword=your_key_password
-keyAlias=fortknox
-storeFile=/path/to/fortknox-release.jks
+keyAlias=securebank
+storeFile=/path/to/securebank-release.jks
 ```
 
 ```groovy title="android/app/build.gradle (SECURE)"
@@ -282,15 +282,15 @@ jobs:
       # highlight-end
 
       - name: Decode signing keystore
-        run: echo "${{ secrets.ANDROID_KEYSTORE_BASE64 }}" | base64 -d > android/fortknox-release.jks
+        run: echo "${{ secrets.ANDROID_KEYSTORE_BASE64 }}" | base64 -d > android/securebank-release.jks
 
       - name: Create key.properties
         run: |
           cat > android/key.properties <<EOF
           storePassword=${{ secrets.KEYSTORE_PASSWORD }}
           keyPassword=${{ secrets.KEY_PASSWORD }}
-          keyAlias=fortknox
-          storeFile=fortknox-release.jks
+          keyAlias=securebank
+          storeFile=securebank-release.jks
           EOF
 ```
 

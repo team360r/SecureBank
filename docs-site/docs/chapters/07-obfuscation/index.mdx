@@ -23,7 +23,7 @@ slug: /chapters/obfuscation
 
 ## The Vulnerability: Readable Source
 
-Build FortKnox in release mode without obfuscation and examine what ships to users:
+Build SecureBank in release mode without obfuscation and examine what ships to users:
 
 ```bash title="Building an unobfuscated release"
 flutter build apk --release
@@ -39,7 +39,7 @@ From an unobfuscated Flutter APK, an attacker can recover:
 |----------|---------|------|
 | Class names | `EncryptionService`, `AuthController` | Reveals security architecture |
 | Method names | `_deriveKey`, `validatePin`, `forceLogout` | Identifies attack targets |
-| String literals | `https://api.fortknox.example.com/v1` | Exposes API endpoints |
+| String literals | `https://api.securebank.example.com/v1` | Exposes API endpoints |
 | Route paths | `/admin/audit-log`, `/teller/approve` | Maps the entire app structure |
 | Error messages | `Invalid PIN: too many attempts` | Reveals business logic |
 
@@ -63,10 +63,10 @@ dart_snapshot_analyzer extracted/lib/arm64-v8a/libapp.so --strings
 The output reveals string constants:
 
 ```
-"fortknox_pbkdf2_salt"
+"securebank_pbkdf2_salt"
 "Bearer "
 "X-User-Role"
-"https://api.fortknox.example.com/v1"
+"https://api.securebank.example.com/v1"
 "/admin/audit-log"
 "EncryptionService not initialised. Call initialise() first."
 ```
@@ -186,6 +186,6 @@ if (kReleaseMode && !ObfuscationCheck.isObfuscated()) {
 
 ## Summary
 
-You have removed the "glass walls" from FortKnox. Dart obfuscation with `--obfuscate` and `--split-debug-info` replaces readable class and method names with meaningless identifiers, forcing attackers to work much harder to understand your app's architecture. You verified that obfuscation is active and set up debug info storage for crash report symbolication.
+You have removed the "glass walls" from SecureBank. Dart obfuscation with `--obfuscate` and `--split-debug-info` replaces readable class and method names with meaningless identifiers, forcing attackers to work much harder to understand your app's architecture. You verified that obfuscation is active and set up debug info storage for crash report symbolication.
 
 In Part 2, you will go further: configuring Android ProGuard/R8 rules for the native layer, detecting rooted and jailbroken devices, and implementing signature verification to catch tampered builds.

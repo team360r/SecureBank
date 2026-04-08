@@ -1,5 +1,5 @@
-name: fortknox
-description: "FortKnox — A deliberately vulnerable Flutter banking app."
+name: securebank
+description: "SecureBank — A deliberately vulnerable Flutter banking app."
 publish_to: 'none'
 version: 1.0.0+1
 

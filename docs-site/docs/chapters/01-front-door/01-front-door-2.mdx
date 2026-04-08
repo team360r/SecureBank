@@ -214,12 +214,12 @@ Notice the server issues a **new** refresh token on every refresh call. This is 
 
 ```dart title="lib/services/auth_service.dart (VULNERABLE)"
 class AuthService {
-  static const String _apiKey = 'sk_live_fortknox_9a8b7c6d5e4f3g2h1i';
+  static const String _apiKey = 'sk_live_securebank_9a8b7c6d5e4f3g2h1i';
 
   Future<bool> login(String email, String password) async {
     print('Login attempt: email=$email, password=$password');
 
-    if (email == 'admin@fortknox.co.uk' && password == 'password123') {
+    if (email == 'admin@securebank.co.uk' && password == 'password123') {
       final prefs = await SharedPreferences.getInstance();
       await prefs.setString('auth_token', 'static_token_abc123');
       await prefs.setString('api_key', _apiKey);

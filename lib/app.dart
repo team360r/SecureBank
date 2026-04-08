@@ -4,8 +4,8 @@ import 'routing/router.dart';
 import 'theme/app_theme.dart';
 import 'providers/theme_provider.dart';
 
-class FortKnoxApp extends ConsumerWidget {
-  const FortKnoxApp({super.key});
+class SecureBankApp extends ConsumerWidget {
+  const SecureBankApp({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -13,7 +13,7 @@ class FortKnoxApp extends ConsumerWidget {
     final themeMode = ref.watch(themeModeProvider);
 
     return MaterialApp.router(
-      title: 'FortKnox',
+      title: 'SecureBank',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.light(),
       darkTheme: AppTheme.dark(),

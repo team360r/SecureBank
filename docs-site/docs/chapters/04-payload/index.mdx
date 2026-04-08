@@ -23,7 +23,7 @@ slug: /chapters/payload
 
 ## The Vulnerability: Plaintext Treasure
 
-Open FortKnox and look at how transactions are stored. If you inspect the Drift database definition, you will find something alarming:
+Open SecureBank and look at how transactions are stored. If you inspect the Drift database definition, you will find something alarming:
 
 ```dart title="lib/data/database/tables.dart"
 class Transactions extends Table {
@@ -54,12 +54,12 @@ In 2019, a major UK challenger bank stored transaction data in plaintext on-devi
 
 ### Seeing the Problem
 
-You can verify this yourself. Run FortKnox on an emulator, create a few transactions, then pull the database:
+You can verify this yourself. Run SecureBank on an emulator, create a few transactions, then pull the database:
 
 ```bash title="Extracting the database (Android emulator)"
 adb root
-adb pull /data/data/com.fortknox.app/databases/fortknox.db ./
-sqlite3 fortknox.db "SELECT recipientName, recipientAccount, amount FROM transactions;"
+adb pull /data/data/com.securebank.app/databases/securebank.db ./
+sqlite3 securebank.db "SELECT recipientName, recipientAccount, amount FROM transactions;"
 ```
 
 The output is devastating:
@@ -239,6 +239,6 @@ flowchart LR
 
 ## Summary
 
-You have identified the first data-at-rest vulnerability in FortKnox: plaintext storage of financial data in the Drift database. You added AES-256-GCM encryption using the `encrypt` package and built a helper that prepends the IV to each ciphertext for self-contained decryption. The repository layer now encrypts sensitive fields on write and decrypts on read, keeping the UI and database schema unchanged.
+You have identified the first data-at-rest vulnerability in SecureBank: plaintext storage of financial data in the Drift database. You added AES-256-GCM encryption using the `encrypt` package and built a helper that prepends the IV to each ciphertext for self-contained decryption. The repository layer now encrypts sensitive fields on write and decrypts on read, keeping the UI and database schema unchanged.
 
 But there is a critical question we have not answered yet: **where does the encryption key come from?** A hardcoded key is no better than no encryption at all. In Part 2, you will derive keys securely using PBKDF2 and build a production-grade `EncryptionService`.

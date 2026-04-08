@@ -24,7 +24,7 @@ The `SecureLogger` from Part 1 prevents PII leaks, but production systems need m
 Create a structured event model:
 
 ```dart title="lib/utils/log_event.dart"
-/// A single structured log entry for the FortKnox audit trail.
+/// A single structured log entry for the SecureBank audit trail.
 class LogEvent {
   final DateTime timestamp;
   final String level;
@@ -124,7 +124,7 @@ class SecureLogger {
     if (kDebugMode) {
       developer.log(
         'Flushed ${batch.length} audit events',
-        name: 'FortKnox:Audit',
+        name: 'SecureBank:Audit',
       );
     }
   }
@@ -407,4 +407,4 @@ Explore the security principles behind this chapter:
 
 ## What's Next
 
-Your FortKnox app now has eyes that see without compromising what they observe. But the watchtower only monitors — it does not challenge intruders at the gate. In **Chapter 9: Biometric Checkpoint**, you will add biometric re-authentication, prevent screenshots of sensitive screens, and lock the app the moment it leaves the foreground.
+Your SecureBank app now has eyes that see without compromising what they observe. But the watchtower only monitors — it does not challenge intruders at the gate. In **Chapter 9: Biometric Checkpoint**, you will add biometric re-authentication, prevent screenshots of sensitive screens, and lock the app the moment it leaves the foreground.

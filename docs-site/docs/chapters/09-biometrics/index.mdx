@@ -17,16 +17,16 @@ import TabItem from '@theme/TabItem';
 
 ## The Vulnerability: No Re-authentication
 
-Open the FortKnox app, log in, then switch to another app. Switch back. You are still on the dashboard — no challenge, no lock screen, full access to the user's balance and transfer capability.
+Open the SecureBank app, log in, then switch to another app. Switch back. You are still on the dashboard — no challenge, no lock screen, full access to the user's balance and transfer capability.
 
 Now try something worse: open the device task switcher. The app's thumbnail shows the full dashboard, including the account balance in GBP.
 
 ```dart title="lib/main.dart (VULNERABLE)"
-class FortKnoxApp extends StatelessWidget {
+class SecureBankApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'FortKnox Banking',
+      title: 'SecureBank Banking',
       // highlight-start
       // No lifecycle observer.
       // No biometric gate.
@@ -47,7 +47,7 @@ class DashboardScreen extends StatelessWidget {
     // No re-authentication. No timeout. No lock.
     // highlight-end
     return Scaffold(
-      appBar: AppBar(title: const Text('FortKnox')),
+      appBar: AppBar(title: const Text('SecureBank')),
       body: Column(
         children: [
           Text('Balance: £14,250.00', style: Theme.of(context).textTheme.headlineMedium),
@@ -136,14 +136,14 @@ Add the usage description to `Info.plist`:
 <dict>
     <!-- highlight-start -->
     <key>NSFaceIDUsageDescription</key>
-    <string>FortKnox uses Face ID to verify your identity before showing account details.</string>
+    <string>SecureBank uses Face ID to verify your identity before showing account details.</string>
     <!-- highlight-end -->
 </dict>
 ```
 
 ## Building the Biometric Service
 
-Create a service that wraps `local_auth` with FortKnox-specific logic:
+Create a service that wraps `local_auth` with SecureBank-specific logic:
 
 ```dart title="lib/services/biometric_service.dart"
 import 'package:local_auth/local_auth.dart';
@@ -178,7 +178,7 @@ class BiometricService {
   /// Prompt the user for biometric verification.
   /// Returns true only on successful authentication.
   Future<bool> authenticate({
-    String reason = 'Verify your identity to access FortKnox',
+    String reason = 'Verify your identity to access SecureBank',
   }) async {
     try {
       log.audit(action: 'biometric_prompt_shown', tag: 'Biometric');
@@ -307,7 +307,7 @@ class _BiometricGateState extends State<BiometricGate>
     log.audit(action: 'app_locked_on_resume', tag: 'Lifecycle');
 
     final authenticated = await widget.biometricService.authenticate(
-      reason: 'Verify your identity to resume FortKnox',
+      reason: 'Verify your identity to resume SecureBank',
     );
 
     if (authenticated) {
@@ -344,7 +344,7 @@ class _LockScreen extends StatelessWidget {
             const Icon(Icons.lock_outline, size: 64, color: Colors.white70),
             const SizedBox(height: 24),
             const Text(
-              'FortKnox Locked',
+              'SecureBank Locked',
               style: TextStyle(
                 color: Colors.white,
                 fontSize: 24,
@@ -383,16 +383,16 @@ import 'services/biometric_service.dart';
 import 'widgets/biometric_gate.dart';
 
 void main() {
-  runApp(const FortKnoxApp());
+  runApp(const SecureBankApp());
 }
 
-class FortKnoxApp extends StatelessWidget {
-  const FortKnoxApp({super.key});
+class SecureBankApp extends StatelessWidget {
+  const SecureBankApp({super.key});
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'FortKnox Banking',
+      title: 'SecureBank Banking',
       theme: ThemeData.dark(),
       // highlight-start
       home: BiometricGate(
@@ -449,7 +449,7 @@ void main() {
       );
 
       expect(find.text('Dashboard'), findsOneWidget);
-      expect(find.text('FortKnox Locked'), findsNothing);
+      expect(find.text('SecureBank Locked'), findsNothing);
     });
 
     testWidgets('shows lock screen text when locked', (tester) async {

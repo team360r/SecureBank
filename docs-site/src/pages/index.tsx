@@ -45,7 +45,7 @@ function HeroSection(): ReactNode {
     <header className={styles.hero}>
       <div className={styles.heroInner}>
         <p className={styles.heroPre}>Flutter Security Tutorial</p>
-        <h1 className={styles.heroTitle}>Fort Knox</h1>
+        <h1 className={styles.heroTitle}>SecureBank</h1>
         <p className={styles.heroTagline}>
           Harden a Flutter banking app against real-world attacks.<br />
           From OWASP to deployment. Every vulnerability explained and fixed.

@@ -180,7 +180,7 @@ class SecureLogger {
     if (kDebugMode) {
       developer.log(
         output,
-        name: 'FortKnox',
+        name: 'SecureBank',
         error: error,
         stackTrace: stack,
       );
@@ -318,7 +318,7 @@ void main() {
 
     test('redacts email addresses', () {
       final result = logger._redact(
-        'User jane.smith@fortknox.co.uk logged in',
+        'User jane.smith@securebank.co.uk logged in',
       );
       expect(result, contains('[REDACTED]'));
       expect(result, isNot(contains('jane.smith')));

@@ -23,14 +23,14 @@ Open `lib/services/auth_service.dart` from the starter project. Here is the auth
 import 'package:shared_preferences/shared_preferences.dart';
 
 class AuthService {
-  static const String _apiKey = 'sk_live_fortknox_9a8b7c6d5e4f3g2h1i';
+  static const String _apiKey = 'sk_live_securebank_9a8b7c6d5e4f3g2h1i';
 
   Future<bool> login(String email, String password) async {
     // FLAW 1: Credentials written to device logs
     print('Login attempt: email=$email, password=$password');
 
     // FLAW 2: Hardcoded credential comparison
-    if (email == 'admin@fortknox.co.uk' && password == 'password123') {
+    if (email == 'admin@securebank.co.uk' && password == 'password123') {
       final prefs = await SharedPreferences.getInstance();
       // FLAW 3: Token stored in plaintext
       await prefs.setString('auth_token', 'static_token_abc123');
@@ -275,7 +275,7 @@ class _LoginScreenState extends State<LoginScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('FortKnox Banking')),
+      appBar: AppBar(title: const Text('SecureBank Banking')),
       body: Padding(
         padding: const EdgeInsets.all(24.0),
         child: Form(

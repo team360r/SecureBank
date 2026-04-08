@@ -1,4 +1,4 @@
-/// FortKnox data models — GBP currency.
+/// SecureBank data models — GBP currency.
 
 enum AccountType { current, savings }
 

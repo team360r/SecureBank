@@ -25,7 +25,7 @@ import 'package:http/http.dart' as http;
 
 class ApiService {
   // FLAW 1: HTTP instead of HTTPS
-  static const String baseUrl = 'http://api.fortknox.co.uk';
+  static const String baseUrl = 'http://api.securebank.co.uk';
 
   Future<Map<String, dynamic>> getBalance(String accountId) async {
     final response = await http.get(
@@ -66,7 +66,7 @@ A Man-in-the-Middle attack intercepts the communication between your app and the
 
 ```mermaid
 sequenceDiagram
-    participant App as FortKnox App
+    participant App as SecureBank App
     participant Attacker as Attacker<br/>(Same Wi-Fi)
     participant Server as Bank Server
 
@@ -96,7 +96,7 @@ The most basic fix is to change `http://` to `https://`. But you should also ens
 ```dart title="lib/services/api_config.dart"
 class ApiConfig {
   // Always HTTPS — no exceptions
-  static const String baseUrl = 'https://api.fortknox.co.uk';
+  static const String baseUrl = 'https://api.securebank.co.uk';
 
   /// Validate that a URL uses HTTPS before making a request.
   static Uri validateAndParse(String path) {
@@ -125,7 +125,7 @@ HTTPS encrypts traffic using TLS, which prevents passive eavesdropping. However,
 
 ## Certificate Pinning: The Concept
 
-When your app connects to `https://api.fortknox.co.uk`, the server presents a TLS certificate. By default, the OS verifies this certificate against its trust store of Certificate Authorities (CAs). The problem is that the trust store can be modified:
+When your app connects to `https://api.securebank.co.uk`, the server presents a TLS certificate. By default, the OS verifies this certificate against its trust store of Certificate Authorities (CAs). The problem is that the trust store can be modified:
 
 - Corporate proxies install their own CA certificates
 - Attackers on rooted/jailbroken devices can add CAs

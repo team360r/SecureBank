@@ -84,7 +84,7 @@ Android provides a declarative way to enforce HTTPS and configure certificate pi
 
     <!-- Pin certificates for your API domain -->
     <domain-config>
-        <domain includeSubdomains="true">api.fortknox.co.uk</domain>
+        <domain includeSubdomains="true">api.securebank.co.uk</domain>
         <pin-set expiration="2025-06-01">
             <!-- Current key -->
             <pin digest="SHA-256">YLh1dUR9y6Kja30RrAn7JKnbQG/uEtLMkBgFF2Fuihg=</pin>
@@ -201,7 +201,7 @@ class SessionManager {
 
 ```dart title="lib/services/api_service.dart (VULNERABLE)"
 class ApiService {
-  static const String baseUrl = 'http://api.fortknox.co.uk';
+  static const String baseUrl = 'http://api.securebank.co.uk';
 
   Future<Map<String, dynamic>> getBalance(String accountId) async {
     final response = await http.get(

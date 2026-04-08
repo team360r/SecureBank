@@ -158,13 +158,13 @@ Future<void> main() async {
         level: LogLevel.warning,
       );
       // Option: show a warning, disable sensitive features,
-      // or refuse to run. FortKnox takes a hard line:
+      // or refuse to run. SecureBank takes a hard line:
       exit(1);
     }
   }
   // highlight-end
 
-  runApp(const FortKnoxApp());
+  runApp(const SecureBankApp());
 }
 ```
 
@@ -304,8 +304,8 @@ class AppAttestService {
 
 ```mermaid
 sequenceDiagram
-    participant App as FortKnox App
-    participant Backend as FortKnox Backend
+    participant App as SecureBank App
+    participant Backend as SecureBank Backend
     participant Google as Google / Apple
 
     App->>Backend: Request nonce/challenge
@@ -362,8 +362,8 @@ Before every production release, run through this checklist:
 
 ```dart title="lib/utils/constants.dart"
 class AppConstants {
-  static const String apiKey = 'sk_live_fortknox_9a8b7c6d5e4f3g2h1i';
-  static const String apiBaseUrl = 'https://api.fortknox.co.uk/v1';
+  static const String apiKey = 'sk_live_securebank_9a8b7c6d5e4f3g2h1i';
+  static const String apiBaseUrl = 'https://api.securebank.co.uk/v1';
   static const String sentryDsn = 'https://abc123@sentry.io/456';
 }
 ```
@@ -419,7 +419,7 @@ class AppConfig {
 
 ## Tutorial Recap
 
-Over eleven chapters, you have transformed FortKnox from a deliberately vulnerable banking prototype into a hardened application:
+Over eleven chapters, you have transformed SecureBank from a deliberately vulnerable banking prototype into a hardened application:
 
 | Chapter | Threat | Defence |
 |---|---|---|

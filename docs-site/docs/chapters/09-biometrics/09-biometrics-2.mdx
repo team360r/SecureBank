@@ -112,7 +112,7 @@ class _ScreenPrivacyState extends State<ScreenPrivacy>
                     Icon(Icons.shield, size: 48, color: Colors.white38),
                     SizedBox(height: 16),
                     Text(
-                      'FortKnox',
+                      'SecureBank',
                       style: TextStyle(
                         color: Colors.white54,
                         fontSize: 20,
@@ -144,13 +144,13 @@ import 'widgets/biometric_gate.dart';
 import 'widgets/screen_privacy.dart';
 import 'services/biometric_service.dart';
 
-class FortKnoxApp extends StatelessWidget {
-  const FortKnoxApp({super.key});
+class SecureBankApp extends StatelessWidget {
+  const SecureBankApp({super.key});
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'FortKnox Banking',
+      title: 'SecureBank Banking',
       theme: ThemeData.dark(),
       home: ScreenPrivacy(
         child: BiometricGate(
@@ -323,11 +323,11 @@ GestureDetector(
 <TabItem value="before" label="Before (Vulnerable)">
 
 ```dart title="lib/main.dart"
-class FortKnoxApp extends StatelessWidget {
+class SecureBankApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'FortKnox Banking',
+      title: 'SecureBank Banking',
       home: const LoginScreen(),
     );
   }
@@ -344,13 +344,13 @@ class FortKnoxApp extends StatelessWidget {
 <TabItem value="after" label="After (Secure)">
 
 ```dart title="lib/main.dart"
-class FortKnoxApp extends StatelessWidget {
-  const FortKnoxApp({super.key});
+class SecureBankApp extends StatelessWidget {
+  const SecureBankApp({super.key});
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'FortKnox Banking',
+      title: 'SecureBank Banking',
       theme: ThemeData.dark(),
       home: ScreenPrivacy(
         child: BiometricGate(

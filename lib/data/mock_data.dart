@@ -1,15 +1,15 @@
-/// Mock data for FortKnox — GBP currency.
+/// Mock data for SecureBank — GBP currency.
 import 'models.dart';
 
 const mockUser = User(
   id: 'user-1',
   name: 'Alex Johnson',
-  email: 'alex@fortknox.dev',
+  email: 'alex@securebank.dev',
   role: UserRole.user,
 );
 
 // VULNERABILITY: Hardcoded credentials (fixed in Chapter 1)
-const hardcodedEmail = 'admin@fortknox.dev';
+const hardcodedEmail = 'admin@securebank.dev';
 const hardcodedPassword = 'password123';
 
 // VULNERABILITY: API key in source code (fixed in Chapter 2)

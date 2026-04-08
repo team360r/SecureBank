@@ -3,7 +3,7 @@ import type {Config} from '@docusaurus/types';
 import type * as Preset from '@docusaurus/preset-classic';
 
 const config: Config = {
-  title: 'Fort Knox',
+  title: 'SecureBank Tutorial',
   tagline: 'Harden a Flutter banking app against real-world attacks',
   favicon: 'img/favicon.ico',
 
@@ -11,11 +11,11 @@ const config: Config = {
     v4: true,
   },
 
-  url: 'https://fort-knox-tutorial.dev',
+  url: 'https://securebank-tutorial.dev',
   baseUrl: '/',
 
   organizationName: 'team360r',
-  projectName: 'secure',
+  projectName: 'SecureBank',
 
   onBrokenLinks: 'throw',
 
@@ -51,9 +51,9 @@ const config: Config = {
       respectPrefersColorScheme: true,
     },
     navbar: {
-      title: 'Fort Knox',
+      title: 'SecureBank Tutorial',
       logo: {
-        alt: 'Fort Knox Logo',
+        alt: 'SecureBank Tutorial Logo',
         src: 'img/logo.svg',
       },
       items: [
@@ -88,7 +88,7 @@ const config: Config = {
           ],
         },
       ],
-      copyright: `Copyright \u00a9 ${new Date().getFullYear()} Fort Knox Tutorial. Built with Docusaurus.`,
+      copyright: `Copyright \u00a9 ${new Date().getFullYear()} SecureBank Tutorial. Built with Docusaurus.`,
     },
     prism: {
       theme: prismThemes.github,

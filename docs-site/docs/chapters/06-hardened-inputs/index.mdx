@@ -23,7 +23,7 @@ slug: /chapters/hardened-inputs
 
 ## The Vulnerability: Trusting the User
 
-FortKnox has two injection surfaces hiding in plain sight. The first is a search feature that builds Drift queries with string interpolation. The second is a WebView that renders transaction notes containing user-supplied HTML.
+SecureBank has two injection surfaces hiding in plain sight. The first is a search feature that builds Drift queries with string interpolation. The second is a WebView that renders transaction notes containing user-supplied HTML.
 
 ### SQL Injection in Drift
 
@@ -129,7 +129,7 @@ The `.like()` method uses parameterised binding under the hood. You get compile-
 
 ## XSS in WebView Components
 
-FortKnox displays detailed transaction receipts in a WebView. The receipt includes a "notes" field where users can add comments to their transfers. Here is the vulnerable implementation:
+SecureBank displays detailed transaction receipts in a WebView. The receipt includes a "notes" field where users can add comments to their transfers. Here is the vulnerable implementation:
 
 ```dart title="lib/features/receipts/receipt_webview.dart — INSECURE"
 class ReceiptWebView extends StatelessWidget {
@@ -224,6 +224,6 @@ This eliminates the entire class of XSS attacks in one line. Only enable JavaScr
 
 ## Summary
 
-You have closed two injection surfaces in FortKnox. SQL injection through string-interpolated Drift queries is neutralised by switching to parameterised queries (or Drift's type-safe API). XSS in WebView components is prevented by escaping HTML entities and disabling JavaScript when it is not needed.
+You have closed two injection surfaces in SecureBank. SQL injection through string-interpolated Drift queries is neutralised by switching to parameterised queries (or Drift's type-safe API). XSS in WebView components is prevented by escaping HTML entities and disabling JavaScript when it is not needed.
 
 In Part 2, you will build a comprehensive `SanitizationService` with allowlist-based validation patterns that catch malicious input before it ever reaches a query or a renderer.

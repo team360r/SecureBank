@@ -1,4 +1,4 @@
-/// VULNERABLE API service for FortKnox.
+/// VULNERABLE API service for SecureBank.
 /// Multiple security issues that get fixed across chapters.
 import 'dart:async';
 import 'models.dart';
@@ -9,7 +9,7 @@ class ApiService {
   final String _apiKey = apiKey;
 
   // VULNERABILITY: Using HTTP instead of HTTPS (fixed in Chapter 3)
-  final String _baseUrl = 'http://api.fortknox.dev';
+  final String _baseUrl = 'http://api.securebank.dev';
 
   Future<T> _simulate<T>(T data, {int delayMs = 800}) async {
     // VULNERABILITY: Logging sensitive request details (fixed in Chapter 8)

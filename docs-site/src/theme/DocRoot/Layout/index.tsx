@@ -8,7 +8,7 @@ import {useProgress} from '../../../hooks/useProgress';
 
 type Props = WrapperProps<typeof LayoutType>;
 
-const BANNER_DISMISSED_KEY = 'fortknox_banner_dismissed';
+const BANNER_DISMISSED_KEY = 'securebank_banner_dismissed';
 
 export default function LayoutWrapper(props: Props): React.ReactElement {
   const {pathname} = useLocation();

@@ -2,12 +2,12 @@
 sidebar_position: 1
 slug: /intro
 title: Introduction
-description: "Welcome to Fort Knox — a hands-on Flutter security tutorial built around a real banking app."
+description: "Welcome to SecureBank — a hands-on Flutter security tutorial built around a real banking app."
 ---
 
 # Introduction
 
-**Fort Knox** is a hands-on Flutter security tutorial for developers who can build apps but haven't focused on security. You'll start with a deliberately vulnerable banking app and harden it chapter by chapter against the OWASP Mobile Top 10.
+**SecureBank** is a hands-on Flutter security tutorial for developers who can build apps but haven't focused on security. You'll start with a deliberately vulnerable banking app and harden it chapter by chapter against the OWASP Mobile Top 10.
 
 ## What you'll learn
 
@@ -31,11 +31,11 @@ You're a Flutter developer who can build apps. You know widgets, state managemen
 
 ## How it works
 
-Each chapter follows the same pattern: identify a vulnerability, explain the real-world risk, then fix it. You'll work in two windows — this tutorial in your browser and the FortKnox app in your IDE.
+Each chapter follows the same pattern: identify a vulnerability, explain the real-world risk, then fix it. You'll work in two windows — this tutorial in your browser and the SecureBank app in your IDE.
 
 ### Chapter branches
 
-Every chapter has a matching git branch that contains FortKnox exactly as it should look after completing that chapter. The branches build incrementally — `chapter-1-front-door` secures authentication, `chapter-3-encrypted-channels` adds cert pinning, and so on up to `completed` which is the fully hardened app.
+Every chapter has a matching git branch that contains SecureBank exactly as it should look after completing that chapter. The branches build incrementally — `chapter-1-front-door` secures authentication, `chapter-3-encrypted-channels` adds cert pinning, and so on up to `completed` which is the fully hardened app.
 
 ```bash
 # See the finished code for any chapter

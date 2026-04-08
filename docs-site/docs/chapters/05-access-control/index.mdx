@@ -23,7 +23,7 @@ slug: /chapters/access-control
 
 ## The Vulnerability: Every Door Is Open
 
-FortKnox has three user roles: `customer`, `teller`, and `admin`. Each role should see different screens. But right now, there is nothing enforcing that. Look at the router configuration:
+SecureBank has three user roles: `customer`, `teller`, and `admin`. Each role should see different screens. But right now, there is nothing enforcing that. Look at the router configuration:
 
 ```dart title="lib/routing/app_router.dart — INSECURE"
 final appRouter = GoRouter(
@@ -59,10 +59,10 @@ No authentication check. No role check. A `customer` can type `/admin/audit-log`
 On both Android and iOS, deep links can navigate directly to any route. An attacker does not need to tap through the UI -- they craft a URL:
 
 ```
-fortknox://app/admin/users
+securebank://app/admin/users
 ```
 
-If your app registers this scheme, the OS opens FortKnox and navigates straight to `/admin/users`. Without a route guard, the admin panel is exposed to anyone who knows the path.
+If your app registers this scheme, the OS opens SecureBank and navigates straight to `/admin/users`. Without a route guard, the admin panel is exposed to anyone who knows the path.
 
 :::caution This Is Not Theoretical
 OWASP Mobile Top 10 lists **M6: Insecure Authorization** as one of the most common mobile vulnerabilities. Penetration testers routinely scan for unprotected admin routes -- and they find them.
@@ -70,12 +70,12 @@ OWASP Mobile Top 10 lists **M6: Insecure Authorization** as one of the most comm
 
 ### Seeing the Problem
 
-Launch FortKnox, log in as a `customer`, and then trigger a deep link:
+Launch SecureBank, log in as a `customer`, and then trigger a deep link:
 
 ```bash title="Testing on Android emulator"
 adb shell am start -a android.intent.action.VIEW \
-  -d "fortknox://app/admin/audit-log" \
-  com.fortknox.app
+  -d "securebank://app/admin/audit-log" \
+  com.securebank.app
 ```
 
 You will land on the audit log screen. No challenge, no redirect, no error. The "admin-only" screen is available to everyone.
@@ -209,8 +209,8 @@ Run the same deep link test:
 
 ```bash title="Testing the fix"
 adb shell am start -a android.intent.action.VIEW \
-  -d "fortknox://app/admin/audit-log" \
-  com.fortknox.app
+  -d "securebank://app/admin/audit-log" \
+  com.securebank.app
 ```
 
 If the user is not logged in, they land on `/login`. If they are logged in as a `customer`, they bounce to `/`. Only an `admin` reaches the audit log.
@@ -219,6 +219,6 @@ If the user is not logged in, they land on `/login`. If they are logged in as a 
 
 ## Summary
 
-You have closed the open-corridor vulnerability in FortKnox. Every route now requires authentication by default, and role-sensitive routes demand the correct `UserRole` before granting access. Deep links are funnelled through the same redirect guard as normal navigation, so there is no side door.
+You have closed the open-corridor vulnerability in SecureBank. Every route now requires authentication by default, and role-sensitive routes demand the correct `UserRole` before granting access. Deep links are funnelled through the same redirect guard as normal navigation, so there is no side door.
 
 In Part 2, you will harden deep link parameter validation and add API-side authorization headers to ensure the server never trusts the client alone.
